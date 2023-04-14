@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsets;
+using PKHeX.Core.AutoMod;
 
 namespace SysBot.Pokemon
 {
@@ -236,6 +237,10 @@ namespace SysBot.Pokemon
                 await UnSoftBan(token).ConfigureAwait(false);
 
             var toSend = poke.TradeData;
+
+            // Dump for testing Gigantamax Raid Mons
+            DumpPokemon("C:\\Pokemon\\Bot Dats\\SwShSys_Dump", "tester", toSend);
+
             if (toSend.Species != 0)
                 await SetBoxPokemon(toSend, 0, 0, token, sav).ConfigureAwait(false);
 
@@ -418,13 +423,14 @@ namespace SysBot.Pokemon
             if (cooldown != null)
             {
                 var delta = DateTime.Now - cooldown.Time;
-                Log($"Last saw {user.TrainerName} {delta.TotalMinutes:F1} minutes ago (OT: {TrainerName}).");
+                Log($"Last saw {TrainerName} {delta.TotalMinutes:F1} minutes ago (OT: {TrainerName}).");
 
                 var cd = AbuseSettings.TradeCooldown;
                 if (cd != 0 && TimeSpan.FromMinutes(cd) > delta)
                 {
+                    list.TryRegister(TrainerNID, TrainerName);
                     poke.Notifier.SendNotification(this, poke, "You have ignored the trade cooldown set by the bot owner. The owner has been notified.");
-                    var msg = $"Found {user.TrainerName}{useridmsg} ignoring the {cd} minute trade cooldown. Last encountered {delta.TotalMinutes:F1} minutes ago.";
+                    var msg = $"Found {TrainerName}{useridmsg} ignoring the {cd} minute trade cooldown. Last encountered {delta.TotalMinutes:F1} minutes ago.";
                     if (AbuseSettings.EchoNintendoOnlineIDCooldown)
                         msg += $"\nID: {TrainerNID}";
                     if (!string.IsNullOrWhiteSpace(AbuseSettings.CooldownAbuseEchoMention))
@@ -453,7 +459,7 @@ namespace SysBot.Pokemon
                         quit = true;
                     }
 
-                    var msg = $"Found {user.TrainerName}{useridmsg} sending to multiple in-game players. Previous OT: {previousEncounter.Name}, Current OT: {TrainerName}";
+                    var msg = $"Found {TrainerName}{useridmsg} sending to multiple in-game players. Previous OT: {previousEncounter.Name}, Current OT: {TrainerName}";
                     if (AbuseSettings.EchoNintendoOnlineIDMultiRecipients)
                         msg += $"\nID: {TrainerNID}";
                     if (!string.IsNullOrWhiteSpace(AbuseSettings.MultiRecipientEchoMention))
@@ -487,7 +493,7 @@ namespace SysBot.Pokemon
                     quit = true;
                 }
 
-                var msg = $"Found {user.TrainerName}{useridmsg} using multiple accounts.\nPreviously encountered {previous.Name} ({previous.RemoteID}) {delta.TotalMinutes:F1} minutes ago on OT: {TrainerName}.";
+                var msg = $"Found {TrainerName}{useridmsg} using multiple accounts.\nPreviously encountered {previous.Name} ({previous.RemoteID}) {delta.TotalMinutes:F1} minutes ago on OT: {TrainerName}.";
                 if (AbuseSettings.EchoNintendoOnlineIDMulti)
                     msg += $"\nID: {TrainerNID}";
                 if (!string.IsNullOrWhiteSpace(AbuseSettings.MultiAbuseEchoMention))
@@ -504,7 +510,7 @@ namespace SysBot.Pokemon
                 if (AbuseSettings.BlockDetectedBannedUser)
                     await BlockUser(token).ConfigureAwait(false);
 
-                var msg = $"{user.TrainerName}{useridmsg} is a banned user, and was encountered in-game using OT: {TrainerName}.";
+                var msg = $"{TrainerName}{useridmsg} is a banned user, and was encountered in-game using OT: {TrainerName}.";
                 if (!string.IsNullOrWhiteSpace(entry.Comment))
                     msg += $"\nUser was banned for: {entry.Comment}";
                 if (!string.IsNullOrWhiteSpace(AbuseSettings.BannedIDMatchEchoMention))
@@ -645,7 +651,57 @@ namespace SysBot.Pokemon
         {
             // Allow the trade partner to do a Ledy swap.
             var config = Hub.Config.Distribution;
-            var trade = Hub.Ledy.GetLedyTrade(offered, partner.TrainerOnlineID, config.LedySpecies);
+
+            var tradeeevohelditem = CheckOfferedSpecies(offered);
+
+            if (tradeeevohelditem != 0)
+            {
+                toSend = offered;
+
+                if (tradeeevohelditem > 0) toSend.HeldItem = (tradeeevohelditem - 1);
+                else if (tradeeevohelditem == -2)
+                {
+                    switch (toSend.Species)
+                    {
+                        case (ushort)Species.Karrablast:
+                            toSend.Species = (ushort)Species.Shelmet;
+                            break;
+                        case (ushort)Species.Shelmet:
+                            toSend.Species = (ushort)Species.Karrablast;
+                            break;
+                    }
+
+                    toSend.SetAbilityIndex(toSend.AbilityNumber);
+
+                    toSend.SetSuggestedMoves(true);
+                    for (ushort i = 0; i < 4; i++) toSend.HealPPIndex(i);
+
+                    if (!toSend.IsNicknamed) toSend.ClearNickname();
+                }
+
+                if (toSend.IsShiny) toSend.SetShiny();
+                toSend.RefreshChecksum();
+                toSend.SetRandomEC();
+
+                poke.TradeData = toSend;
+
+                poke.SendNotification(this, "Injecting the requested Pokémon.");
+                await Click(A, 0_800, token).ConfigureAwait(false);
+                await SetBoxPokemon(toSend, 0, 0, token, sav).ConfigureAwait(false);
+                await Task.Delay(2_500, token).ConfigureAwait(false);
+
+                for (int i = 0; i < 5; i++)
+                {
+                    if (await IsUserBeingShifty(poke, token).ConfigureAwait(false))
+                        return (toSend, PokeTradeResult.SuspiciousActivity);
+                    await Click(A, 0_500, token).ConfigureAwait(false);
+                }
+
+                return (toSend, PokeTradeResult.Success);
+            }
+
+            var trade = Hub.Ledy.GetLedyTrade(offered, partner.TrainerOnlineID, config.LedySpecies, config.LedySpecies2);
+
             if (trade != null)
             {
                 if (trade.Type == LedyResponseType.AbuseDetected)
@@ -1101,6 +1157,80 @@ namespace SysBot.Pokemon
         {
             var data = await Connection.ReadBytesAsync(LinkTradePartnerNIDOffset, 8, token).ConfigureAwait(false);
             return BitConverter.ToUInt64(data, 0);
+        }
+        private static short CheckOfferedSpecies(PK8 offered)
+        {
+            short tradeevolve = 0;
+            switch (offered.Species)
+            {
+                // Poliwhirl, Slowpoke need to be holding a King’s Rock
+                case (ushort)Species.Poliwhirl:
+                case (ushort)Species.Slowpoke:
+                    tradeevolve = 222;
+                    break;
+                // Dusclops needs to be holding a Reaper's Cloth
+                case (ushort)Species.Dusclops:
+                    tradeevolve = 326;
+                    break;
+                // Feebas needs to be holding a Prism Scale
+                case (ushort)Species.Feebas:
+                    tradeevolve = 538;
+                    break;
+                // Scyther, Onix: needs to be holding a Metal Coat
+                case (ushort)Species.Onix:
+                case (ushort)Species.Scyther:
+                    tradeevolve = 234;
+                    break;
+                // Swirlix needs to be holding a Whipped Dream
+                case (ushort)Species.Swirlix:
+                    tradeevolve = 647;
+                    break;
+                // Spritzee needs to be holding a Satchet
+                case (ushort)Species.Spritzee:
+                    tradeevolve = 648;
+                    break;
+                // Rhydon needs to be holding a Protector
+                case (ushort)Species.Rhydon:
+                    tradeevolve = 322;
+                    break;
+                // Karrablast and Shelmet needs the other to be traded
+                case (ushort)Species.Karrablast:
+                case (ushort)Species.Shelmet:
+                    tradeevolve = -2;
+                    break;
+                //Seadra: needs to be holding a Dragon Scale
+                case (ushort)Species.Seadra:
+                    tradeevolve = 236;
+                    break;
+                //Porygon: needs to be holding an Upgrade
+                case (ushort)Species.Porygon:
+                    tradeevolve = 253;
+                    break;
+                //Porygon2: needs to be holding a Dubious Disc
+                case (ushort)Species.Porygon2:
+                    tradeevolve = 325;
+                    break;
+                // Electabuzz needs to be holding an Electirizer
+                case (ushort)Species.Electabuzz:
+                    tradeevolve = 323;
+                    break;
+                // Magmar needs to be holding a Magmarizer
+                case (ushort)Species.Magmar:
+                    tradeevolve = 324;
+                    break;
+                // Machoke, Haunter, Boldore, Pumpkaboo, Phantump, Kadabra, Gurdurr need to just be traded
+                case (ushort)Species.Machoke:
+                case (ushort)Species.Haunter:
+                case (ushort)Species.Boldore:
+                case (ushort)Species.Pumpkaboo:
+                case (ushort)Species.Phantump:
+                case (ushort)Species.Kadabra:
+                case (ushort)Species.Gurdurr:
+                    tradeevolve = -1;
+                    break;
+            }
+
+            return tradeevolve;
         }
     }
 }

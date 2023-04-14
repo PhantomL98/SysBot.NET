@@ -18,10 +18,10 @@ namespace SysBot.Pokemon
         {
             var normalize = input.Normalize(NormalizationForm.FormKC);
             var sanitized = normalize.Where(char.IsLetterOrDigit);
-            return string.Concat(sanitized.Select(char.ToLower));
+            return string.Concat(sanitized);
         }
 
-        private static readonly char[] Blacklist = { '.', '\\', '/', ',', '*', ';', '．', '・', '。' };
+        private static readonly char[] Blacklist = { /*'.',*/ '\\', '/', ',', '*', ';', /*'．', */'・', '。' };
         private static readonly string[] TLD = { "tv", "gg", "yt" };
         private static readonly string[] TLD2 = { "com", "org", "net" };
 
