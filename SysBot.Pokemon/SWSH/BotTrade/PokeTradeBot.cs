@@ -425,6 +425,8 @@ namespace SysBot.Pokemon
                 var delta = DateTime.Now - cooldown.Time;
                 Log($"Last saw {TrainerName} {delta.TotalMinutes:F1} minutes ago (OT: {TrainerName}).");
 
+                list.TryRegister(TrainerNID, TrainerName);
+
                 var cd = AbuseSettings.TradeCooldown;
                 if (cd != 0 && TimeSpan.FromMinutes(cd) > delta)
                 {
