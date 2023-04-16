@@ -682,8 +682,9 @@ namespace SysBot.Pokemon
                 }
 
                 if (toSend.IsShiny) toSend.SetShiny();
+                toSend.SetRandomEC(); 
                 toSend.RefreshChecksum();
-                toSend.SetRandomEC();
+                
 
                 poke.TradeData = toSend;
 
