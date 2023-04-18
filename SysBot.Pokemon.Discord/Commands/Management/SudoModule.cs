@@ -3,11 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.IO;
 using Discord;
+using PKHeX.Core;
+using SysBot.Base;
+using System.Globalization;
 
 namespace SysBot.Pokemon.Discord
 {
-    public class SudoModule : ModuleBase<SocketCommandContext>
+    public class SudoModule<T> : ModuleBase<SocketCommandContext> where T : PKM, new()
     {
         [Command("blacklist")]
         [Summary("Blacklists mentioned user.")]
@@ -81,6 +85,39 @@ namespace SysBot.Pokemon.Discord
             var lines = SysCordSettings.Settings.UserBlacklist.Summarize();
             var msg = string.Join("\n", lines);
             await ReplyAsync(Format.Code(msg)).ConfigureAwait(false);
+        }
+
+        [Command("trademon")]
+        [Summary("Changes trade mon for idle distribution.")]
+        [RequireSudo]
+        public async Task ChangeTradeMon([Remainder] string input)
+        {
+            var trainer = AutoLegalityWrapper.GetTrainerInfo<T>();
+            var sav = SaveUtil.GetBlankSAV((GameVersion)trainer.Game, trainer.OT);
+            bool isSpecies = Enum.TryParse(input, true, out Species ledyMonSpecies);
+
+            if (!isSpecies)
+                await ReplyAsync("Please verify you entered a valid Pokémon species").ConfigureAwait(false);
+
+            else if (!sav.Personal.IsSpeciesInGame((ushort)ledyMonSpecies))
+                await ReplyAsync("Please enter a valid Pokémon within the current Game Version").ConfigureAwait(false);
+
+            else
+            {
+                SysCordSettings.HubConfig.Distribution.LedySpecies = ledyMonSpecies;
+                EchoUtil.Echo($"Updated LedySpecies to: {ledyMonSpecies}");
+                await ReplyAsync($"Updated LedySpecies to: {ledyMonSpecies}").ConfigureAwait(false);
+            }
+
+        }
+
+        [Command("checkmon")]
+        [Summary("check the current LedySpecies")]
+        [RequireSudo]
+        public async Task EchoLedySpecies()
+        {
+            EchoUtil.Echo($"LedySpecies is currently: {SysCordSettings.HubConfig.Distribution.LedySpecies}");
+            await ReplyAsync(Format.Code($"LedySpecies is currently: {SysCordSettings.HubConfig.Distribution.LedySpecies}")).ConfigureAwait(false);
         }
 
         private RemoteControlAccess GetReference(IUser channel) => new()

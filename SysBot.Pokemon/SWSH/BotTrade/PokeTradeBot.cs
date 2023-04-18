@@ -238,9 +238,6 @@ namespace SysBot.Pokemon
 
             var toSend = poke.TradeData;
 
-            // Dump for testing Gigantamax Raid Mons
-            DumpPokemon("C:\\Pokemon\\Bot Dats\\SwShSys_Dump", "tester", toSend);
-
             if (toSend.Species != 0)
                 await SetBoxPokemon(toSend, 0, 0, token, sav).ConfigureAwait(false);
 
@@ -660,6 +657,8 @@ namespace SysBot.Pokemon
             {
                 toSend = offered;
 
+                DumpPokemon("C:\\Pokemon\\Bot Dats\\SwShSys_Dump", "tester", toSend);
+
                 if (tradeeevohelditem > 0) toSend.HeldItem = (tradeeevohelditem - 1);
                 else if (tradeeevohelditem == -2)
                 {
@@ -673,18 +672,37 @@ namespace SysBot.Pokemon
                             break;
                     }
 
-                    toSend.SetAbilityIndex(toSend.AbilityNumber);
+                    EchoUtil.Echo($"The Ability Number is: {toSend.AbilityNumber}");
 
+                    switch (toSend.AbilityNumber)
+                    {
+                        case 1:
+                        case 2:
+                            {
+                                toSend.RefreshAbility(toSend.AbilityNumber - 1);
+                                break;
+                            }
+                        case 4:
+                            {
+                                toSend.RefreshAbility(2);
+                                break;
+                            }
+
+                    }
+                    toSend.ClearRelearnMoves(); 
                     toSend.SetSuggestedMoves(true);
                     for (ushort i = 0; i < 4; i++) toSend.HealPPIndex(i);
 
                     if (!toSend.IsNicknamed) toSend.ClearNickname();
                 }
 
+                toSend.LegalizePokemon();
                 if (toSend.IsShiny) toSend.SetShiny();
                 toSend.SetRandomEC(); 
                 toSend.RefreshChecksum();
                 
+
+                DumpPokemon("C:\\Pokemon\\Bot Dats\\SwShSys_Dump", "tester", toSend);
 
                 poke.TradeData = toSend;
 
