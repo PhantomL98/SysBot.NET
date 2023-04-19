@@ -416,18 +416,25 @@ namespace SysBot.Pokemon
             var isDistribution = poke.Type == PokeTradeType.Random;
             var useridmsg = isDistribution ? "" : $" ({user.ID})";
             var list = isDistribution ? PreviousUsersDistribution : PreviousUsers;
+
             int wlIndex = AbuseSettings.WhiteListedIDs.List.FindIndex(z => z.ID == TrainerNID);
-            ulong wlID = AbuseSettings.WhiteListedIDs.List[wlIndex].ID;
-            var wlExpires = AbuseSettings.WhiteListedIDs.List[wlIndex].Expiration;
             DateTime wlCheck = DateTime.Now;
-
-            if (wlID != 0 && wlExpires <= wlCheck)
+            var wlAllow = false;
+            
+            if (wlIndex > -1)
             {
-                AbuseSettings.WhiteListedIDs.RemoveAll(z => z.ID == TrainerNID);
-                EchoUtil.Echo($"Removed {TrainerName} from Whitelist due to expired duration.");
+                ulong wlID = AbuseSettings.WhiteListedIDs.List[wlIndex].ID;
+                var wlExpires = AbuseSettings.WhiteListedIDs.List[wlIndex].Expiration;
+                
+                if (wlID != 0 && wlExpires <= wlCheck)
+                {
+                    AbuseSettings.WhiteListedIDs.RemoveAll(z => z.ID == TrainerNID);
+                    EchoUtil.Echo($"Removed {TrainerName} from Whitelist due to expired duration.");
+                    wlAllow = false;
+                }
+                else if (wlID != 0)
+                    wlAllow = true;
             }
-
-            wlID = AbuseSettings.WhiteListedIDs.List[wlIndex].ID;
 
             var cooldown = list.TryGetPrevious(TrainerNID);
             if (cooldown != null)
@@ -438,7 +445,7 @@ namespace SysBot.Pokemon
                 list.TryRegister(TrainerNID, TrainerName);
 
                 var cd = AbuseSettings.TradeCooldown;
-                if (cd != 0 && TimeSpan.FromMinutes(cd) > delta && wlID == 0)
+                if (cd != 0 && TimeSpan.FromMinutes(cd) > delta && !wlAllow)
                 {
                     list.TryRegister(TrainerNID, TrainerName);
                     poke.Notifier.SendNotification(this, poke, "You have ignored the trade cooldown set by the bot owner. The owner has been notified.");
