@@ -7,7 +7,6 @@ using System.IO;
 using Discord;
 using PKHeX.Core;
 using SysBot.Base;
-using System.Globalization;
 
 namespace SysBot.Pokemon.Discord
 {
@@ -88,7 +87,7 @@ namespace SysBot.Pokemon.Discord
         }
 
         [Command("trademon")]
-        [Summary("Changes trade mon for idle distribution.")]
+        [Summary("Changes LedySpecies of Pokémon for idle distribution.")]
         [RequireSudo]
         public async Task ChangeTradeMon([Remainder] string input)
         {
@@ -112,12 +111,72 @@ namespace SysBot.Pokemon.Discord
         }
 
         [Command("checkmon")]
-        [Summary("check the current LedySpecies")]
+        [Summary("Checks what the current LedySpecies is")]
         [RequireSudo]
         public async Task EchoLedySpecies()
         {
-            EchoUtil.Echo($"LedySpecies is currently: {SysCordSettings.HubConfig.Distribution.LedySpecies}");
+            EchoUtil.Echo($"LedySpecies was checked by {Context.User.Username} and is currently: {SysCordSettings.HubConfig.Distribution.LedySpecies}");
             await ReplyAsync(Format.Code($"LedySpecies is currently: {SysCordSettings.HubConfig.Distribution.LedySpecies}")).ConfigureAwait(false);
+        }
+
+        [Command("addwl")]
+        [Summary("Adds NID to whitelist for cooldown skipping. Format: addwl [NID] [IGN] [Duration in hours](optional)")]
+        [RequireSudo]
+        // Adds a <NID> to cooldown whitelist.  Syntax: <prefix>addwl <NID>, <OT_Name>, <Reason for whitelisting>, <day/hour>, <duration>
+        // Do not provide last two parameters for non-expiring whitelist.
+        public async Task AddWhiteList([Summary("Whitelist user from cooldowns. Format: <NID>, <OT Name>, <Reason for whitelisting>, <Day/Hour>, <Duration>")][Remainder] string input)
+        {
+            var wlParams = input.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+            DateTime wlExpires = DateTime.Now;
+            bool converted = false;
+            converted = ulong.TryParse(wlParams[0].ToString(), out ulong NIDTrainer);
+            if (!converted)
+            {
+                await ReplyAsync("Please enter a NID.");
+                return;
+            }
+
+            if (wlParams.Length == 4 || wlParams.Length < 2)
+            {
+                await ReplyAsync(Format.Code($"Please entire the command with the correct syntax. Format: <NID>, <OT Name>, <Reason for whitelisting>, <day/hour>, <duration> (Last two are optional but BOTH must be given if one is, and hour is the default for misspelling)")).ConfigureAwait(false);
+                return;
+            }
+            else if (wlParams.Length == 3)
+            {
+                wlExpires = DateTime.MaxValue;
+
+            }
+            else if (wlParams[3].ToString() == "Day" || wlParams[3].ToString() == "day")
+            {
+                wlExpires = DateTime.Now;
+                converted = int.TryParse(wlParams[4].ToString(), out int result);
+                if (!converted)
+                {
+                    await ReplyAsync("Please enter a valid number.");
+                    return;
+                }
+                TimeSpan wlDuration = new TimeSpan(result, 0, 0, 0);
+                wlExpires = wlExpires.Add(wlDuration);
+
+            }
+            else
+            {
+                wlExpires = DateTime.Now;
+                converted = int.TryParse(wlParams[4].ToString(), out int result);
+                if (!converted)
+                {
+                    await ReplyAsync("Please enter a valid number.");
+                    return;
+                }
+                TimeSpan wlDuration = new TimeSpan(result, 0, 0);
+                wlExpires = wlExpires.Add(wlDuration);
+
+            }
+            var users = Context.Message.MentionedUsers;
+            
+            SysCordSettings.HubConfig.TradeAbuse.WhiteListedIDs.AddIfNew(new[] { GetReference(wlParams[1], NIDTrainer, wlExpires, Context.User.Username, wlParams[2]) });
+            EchoUtil.Echo($"Successfully added {wlParams[1]}-{NIDTrainer} to the WhiteList which will expire at: {wlExpires}, this was done because: {wlParams[2]}.");
+            await ReplyAsync(Format.Code($"Successfully added {wlParams[1]}-{NIDTrainer} to the WhiteList which will expire at: {wlExpires}, this was done because: {wlParams[2]}.")).ConfigureAwait(false);
         }
 
         private RemoteControlAccess GetReference(IUser channel) => new()
@@ -132,6 +191,14 @@ namespace SysBot.Pokemon.Discord
             ID = id,
             Name = "Manual",
             Comment = $"Added by {Context.User.Username} on {DateTime.Now:yyyy.MM.dd-hh:mm:ss}",
+        };
+        
+        private static RemoteControlAccess GetReference(string name, ulong id, DateTime expiration, string user, string comment) => new()
+        {
+            ID = id,
+            Name = name,
+            Expiration = expiration,
+            Comment = $"{comment} - Added by {user} on {DateTime.Now:yyyy.MM.dd-hh:mm:ss}",
         };
 
         protected static IEnumerable<ulong> GetIDs(string content)
