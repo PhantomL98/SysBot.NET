@@ -429,7 +429,7 @@ namespace SysBot.Pokemon
                 if (wlID != 0 && wlExpires <= wlCheck)
                 {
                     AbuseSettings.WhiteListedIDs.RemoveAll(z => z.ID == TrainerNID);
-                    EchoUtil.Echo($"Removed {TrainerName} from Whitelist due to expired duration.");
+                    EchoUtil.Echo($"Removed {TrainerName} from Whitelist due to an expired duration.");
                     wlAllow = false;
                 }
                 else if (wlID != 0)
