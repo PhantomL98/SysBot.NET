@@ -709,15 +709,28 @@ namespace SysBot.Pokemon
                     toSend.ClearRelearnMoves(); 
                     toSend.SetSuggestedMoves(true);
                     for (ushort i = 0; i < 4; i++) toSend.HealPPIndex(i);
-
                     if (!toSend.IsNicknamed) toSend.ClearNickname();
+                    toSend.LegalizePokemon();
                 }
-
-                toSend.LegalizePokemon();
-                if (toSend.IsShiny) toSend.SetShiny();
+                if (toSend.IsShiny)
+                {
+                    if (toSend.ShinyXor == 0)
+                    {
+                        do
+                        {
+                            toSend.SetShiny();
+                        } while (toSend.ShinyXor != 0);
+                    }
+                    else
+                    {
+                        do
+                        {
+                            toSend.SetShiny();
+                        } while (toSend.ShinyXor != 1);
+                    }
+                }
                 toSend.SetRandomEC(); 
                 toSend.RefreshChecksum();
-                
 
                 DumpPokemon("C:\\Pokemon\\Bot Dats\\SwShSys_Dump", "tester", toSend);
 

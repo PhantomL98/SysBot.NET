@@ -18,6 +18,7 @@ namespace SysBot.Pokemon
             if (nickIndex > -1)
             {
                 restorenick = setstring[..(nickIndex + 1)];
+                restorenick = setstring[..(nickIndex + 1)];
                 if (restorenick.TrimStart().StartsWith("("))
                     return null;
                 setstring = setstring[(nickIndex + 1)..];
