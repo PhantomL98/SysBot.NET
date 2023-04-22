@@ -410,7 +410,6 @@ namespace SysBot.Pokemon
 
         private async Task<PokeTradeResult> CheckPartnerReputation(PokeTradeDetail<PK8> poke, ulong TrainerNID, string TrainerName, CancellationToken token)
         {
-            // Code for CD here or after these declarations
             bool quit = false;
             var user = poke.Trainer;
             var isDistribution = poke.Type == PokeTradeType.Random;
@@ -419,7 +418,7 @@ namespace SysBot.Pokemon
 
             int wlIndex = AbuseSettings.WhiteListedIDs.List.FindIndex(z => z.ID == TrainerNID);
             DateTime wlCheck = DateTime.Now;
-            var wlAllow = false;
+            bool wlAllow = false;
             
             if (wlIndex > -1)
             {
@@ -691,8 +690,6 @@ namespace SysBot.Pokemon
                             toSend.Species = (ushort)Species.Karrablast;
                             break;
                     }
-
-                    EchoUtil.Echo($"The Ability Number is: {toSend.AbilityNumber}");
 
                     switch (toSend.AbilityNumber)
                     {
