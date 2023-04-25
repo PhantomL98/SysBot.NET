@@ -8,6 +8,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsetsSV;
+using PKHeX.Core.AutoMod;
+using System.Diagnostics;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
+using System.ComponentModel.Design;
+using System.Collections.Generic;
 
 namespace SysBot.Pokemon
 {
@@ -350,6 +356,10 @@ namespace SysBot.Pokemon
                 return partnerCheck;
             }
 
+            bool isDistribution = false;
+            if (poke.Type == PokeTradeType.Random)
+                isDistribution = true;
+            var list = isDistribution ? PreviousUsersDistribution : PreviousUsers;
             // Hard check to verify that the offset changed from the last thing offered from the previous trade.
             // This is because box opening times can vary per person, the offset persists between trades, and can also change offset between trades.
             var tradeOffered = await ReadUntilChanged(TradePartnerOfferedOffset, lastOffered, 10_000, 0_500, false, true, token).ConfigureAwait(false);
@@ -422,6 +432,9 @@ namespace SysBot.Pokemon
 
             // Sometimes they offered another mon, so store that immediately upon leaving Union Room.
             lastOffered = await SwitchConnection.ReadBytesAbsoluteAsync(TradePartnerOfferedOffset, 8, token).ConfigureAwait(false);
+
+            if (poke.Type == PokeTradeType.Random)
+                list.TryRegister(trainerNID, tradePartner.TrainerName);
 
             await ExitTradeToPortal(false, token).ConfigureAwait(false);
             return PokeTradeResult.Success;
@@ -893,7 +906,17 @@ namespace SysBot.Pokemon
                 poke.TradeData = toSend;
 
                 poke.SendNotification(this, "Injecting the requested Pokémon.");
-                await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
+                if (Hub.Config.Distribution.AllowTraderOTInformation)
+                {
+                    if (!await SetBoxPkmWithSwappedIDDetailsSV(toSend, sav, poke, token).ConfigureAwait(false))
+                    {
+                        poke.SendNotification(this, "Uh oh! Something happened and I sent the original pokemon unchanged");
+                        await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
+                    }
+                }
+                else
+                    await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
+                await Task.Delay(2_500, token).ConfigureAwait(false);
             }
             else if (config.LedyQuitIfNoMatch)
             {
@@ -954,7 +977,9 @@ namespace SysBot.Pokemon
         {
             bool quit = false;
             var user = poke.Trainer;
-            var isDistribution = poke.Type == PokeTradeType.Random;
+            bool isDistribution = false;
+            if (poke.Type == PokeTradeType.Random)
+                isDistribution = true;
             var useridmsg = isDistribution ? "" : $" ({user.ID})";
             var list = isDistribution ? PreviousUsersDistribution : PreviousUsers;
 
@@ -968,7 +993,8 @@ namespace SysBot.Pokemon
                 if (cd != 0 && TimeSpan.FromMinutes(cd) > delta)
                 {
                     poke.Notifier.SendNotification(this, poke, "You have ignored the trade cooldown set by the bot owner. The owner has been notified.");
-                    var msg = $"Found {user.TrainerName}{useridmsg} ignoring the {cd} minute trade cooldown. Last encountered {delta.TotalMinutes:F1} minutes ago.";
+                    var msg = $"Found {TrainerName}{useridmsg} ignoring the {cd} minute trade cooldown. Last encountered {delta.TotalMinutes:F1} minutes ago.";
+                    list.TryRegister(TrainerNID, TrainerName);
                     if (AbuseSettings.EchoNintendoOnlineIDCooldown)
                         msg += $"\nID: {TrainerNID}";
                     if (!string.IsNullOrWhiteSpace(AbuseSettings.CooldownAbuseEchoMention))
@@ -1007,9 +1033,7 @@ namespace SysBot.Pokemon
 
             // Try registering the partner in our list of recently seen.
             // Get back the details of their previous interaction.
-            var previous = isDistribution
-                ? list.TryRegister(TrainerNID, TrainerName)
-                : list.TryRegister(TrainerNID, TrainerName, poke.Trainer.ID);
+            var previous = list.TryGetPrevious(TrainerNID);
             if (previous != null && previous.NetworkID == TrainerNID && previous.RemoteID != user.ID && !isDistribution)
             {
                 var delta = DateTime.Now - previous.Time;
@@ -1023,7 +1047,7 @@ namespace SysBot.Pokemon
                     quit = true;
                 }
 
-                var msg = $"Found {user.TrainerName}{useridmsg} using multiple accounts.\nPreviously encountered {previous.Name} ({previous.RemoteID}) {delta.TotalMinutes:F1} minutes ago on OT: {TrainerName}.";
+                var msg = $"Found {TrainerName}{useridmsg} using multiple accounts.\nPreviously encountered {previous.Name} ({previous.RemoteID}) {delta.TotalMinutes:F1} minutes ago on OT: {TrainerName}.";
                 if (AbuseSettings.EchoNintendoOnlineIDMulti)
                     msg += $"\nID: {TrainerNID}";
                 if (!string.IsNullOrWhiteSpace(AbuseSettings.MultiAbuseEchoMention))
@@ -1055,5 +1079,101 @@ namespace SysBot.Pokemon
             Name = name,
             Comment = $"Added automatically on {DateTime.Now:yyyy.MM.dd-hh:mm:ss} ({comment})",
         };
+        private async Task<bool> SetBoxPkmWithSwappedIDDetailsSV(PK9 toSend, SAV9SV sav, PokeTradeDetail<PK9> poke, CancellationToken token)
+        {
+            poke.SendNotification(this, "Checking if I can change OT info");
+
+            var cln = (PK9)toSend.Clone();
+
+            var tradepartner = await GetTradePartnerInfo(token).ConfigureAwait(false);
+
+            var changeallowed = OTChangeAllowed(toSend, tradepartner);
+
+            if (changeallowed)
+            {
+                poke.SendNotification(this, "Changing OT info to:");
+                cln.OT_Gender = tradepartner.Gender;
+                cln.TrainerTID7 = Convert.ToUInt32(tradepartner.TID7);
+                cln.TrainerSID7 = Convert.ToUInt32(tradepartner.SID7);
+                cln.Language = tradepartner.Language;
+                cln.OT_Name = tradepartner.TrainerName;
+                cln.Version = tradepartner.Game;
+                if (cln.HeldItem > -1 && cln.Species != (ushort)Species.Finizen) cln.SetDefaultNickname(); //Block nickname clear for item distro, Change Species as needed.
+                if (cln.HeldItem > 0 && cln.RibbonMarkDestiny == true) cln.SetDefaultNickname();
+
+                poke.SendNotification(this, "OT_Name: " + cln.OT_Name);
+                poke.SendNotification(this, "TID: " + cln.TrainerTID7);
+                poke.SendNotification(this, "SID: " + cln.TrainerSID7);
+                poke.SendNotification(this, "Gender: " + (Gender)cln.OT_Gender);
+                poke.SendNotification(this, "Language: " + (LanguageID)(cln.Language));
+                poke.SendNotification(this, "Game: " + (GameVersion)(cln.Version));
+
+                if (toSend.IsShiny)
+                    cln.SetShiny();
+
+                if (cln.Species == (ushort)Species.Dunsparce || cln.Species == (ushort)Species.Tandemaus) //Keep EC to maintain form
+                {
+                    if (cln.EncryptionConstant % 100 == 0)
+                        cln = KeepECModable(cln);
+                }
+                else
+                    if (cln.Met_Location != 30024) cln.SetRandomEC(); //OT for raidmon
+                cln.RefreshChecksum();
+                poke.SendNotification(this, "NPC user has their OT now.");
+            }
+
+            var tradesv = new LegalityAnalysis(cln); //Legality check, if fail, sends original PK9 instead
+
+            if (tradesv.Valid)
+            {
+                await SetBoxPokemonAbsolute(BoxStartOffset, cln, token, sav).ConfigureAwait(false);
+            }
+
+            return tradesv.Valid;
+        }
+        private static bool OTChangeAllowed(PK9 mon, TradePartnerSV trader1)
+        {
+            var changeallowed = true;
+
+            // Check if OT change is allowed for different situations
+            switch (mon.Species)
+            {
+                //Miraidon on Scarlet, no longer needed
+                case (ushort)Species.Miraidon:
+                    if (trader1.Game == (int)GameVersion.SL)
+                        changeallowed = false;
+                    break;
+                //Koraidon on Violet, no longer needed
+                case (ushort)Species.Koraidon:
+                    if (trader1.Game == (int)GameVersion.VL)
+                        changeallowed = false;
+                    break;
+                //Ditto will not OT change unless it has Destiny Mark
+                case (ushort)Species.Ditto:
+                    if (mon.RibbonMarkDestiny == true)
+                        changeallowed = true;
+                    else
+                        changeallowed = false;
+                    break;
+            }
+            switch (mon.OT_Name) //Stops mons with Specific OT from changing to User's OT
+            {
+                case "Blaines":
+                case "New Year 23":
+                case "Valentine":
+                    changeallowed = false;
+                    break;
+            }
+            return changeallowed;
+        }
+        private static PK9 KeepECModable(PK9 eckeep) //Maintain form for Dunsparce/Tandemaus
+        {
+            eckeep.SetRandomEC();
+
+            uint ecDelta = eckeep.EncryptionConstant % 100;
+            eckeep.EncryptionConstant -= ecDelta;
+
+            return eckeep;
+        }
     }
 }
