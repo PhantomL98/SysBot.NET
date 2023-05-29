@@ -12,7 +12,7 @@ using PKHeX.Core.AutoMod;
 
 namespace SysBot.Pokemon
 {
-    public class PokeTradeBot : PokeRoutineExecutor8, ICountBot
+    public partial class PokeTradeBot : PokeRoutineExecutor8, ICountBot
     {
         public static ISeedSearchHandler<PK8> SeedChecker = new NoSeedSearchHandler<PK8>();
         private readonly PokeTradeHub<PK8> Hub;
@@ -768,6 +768,15 @@ namespace SysBot.Pokemon
                 }
 
                 toSend = trade.Receive;
+                bool clearName = true;
+
+                if (!toSend.IsEgg && (Species)toSend.Species != Hub.Config.Distribution.LedySpecies2)
+                {
+                    var result = await SetOTDetails(toSend, partner, sav, clearName, token).ConfigureAwait(false);
+                    if (result.Item1 == true)
+                        toSend = result.Item2;
+                }
+
                 poke.TradeData = toSend;
 
                 poke.SendNotification(this, "Injecting the requested Pokémon.");
@@ -1282,6 +1291,57 @@ namespace SysBot.Pokemon
             }
 
             return tradeevolve;
+        }
+
+        private async Task<(PK8, bool)> SetOTDetailsSWSH(PK8 toSend, string trainerName, SAV8SWSH sav, CancellationToken token)
+        {
+            var data = await Connection.ReadBytesAsync(LinkTradePartnerNameOffset - 0x8, 8, token).ConfigureAwait(false);
+            var tidsid = BitConverter.ToUInt32(data, 0);
+            var cln = toSend.Clone();
+
+            cln.OT_Gender = data[6];
+            cln.TrainerTID7 = tidsid % 1_000_000;
+            cln.TrainerSID7 = tidsid / 1_000_000;
+            cln.Language = data[5];
+            cln.Version = data[4];
+            cln.OT_Name = trainerName;
+            cln.ClearNickname();
+
+            if (toSend.IsShiny)
+            {
+                if (toSend.ShinyXor == 0)
+                {
+                    do
+                    {
+                        cln.SetShiny();
+                    } while (cln.ShinyXor != 0);
+                }
+                else
+                {
+                    do
+                    {
+                        cln.SetShiny();
+                    } while (cln.ShinyXor != 1);
+                }
+            }
+            else
+                cln.SetUnshiny();
+
+            cln.SetRandomEC();
+            cln.RefreshChecksum();
+
+            var tradeswsh = new LegalityAnalysis(cln);
+            if (tradeswsh.Valid)
+            {
+                Log($"Pokemon is valid, used trade partnerInfo");
+                return (cln, true);
+            }
+            else
+            {
+                Log($"Pokemon not valid, do nothing to trade Pokemon");
+            }
+
+            return (toSend, false);
         }
     }
 }

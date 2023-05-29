@@ -18,7 +18,7 @@ using System.Collections.Generic;
 namespace SysBot.Pokemon
 {
     // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
-    public class PokeTradeBotSV : PokeRoutineExecutor9SV, ICountBot
+    public partial class PokeTradeBotSV : PokeRoutineExecutor9SV, ICountBot
     {
         private readonly PokeTradeHub<PK9> Hub;
         private readonly TradeSettings TradeSettings;
@@ -905,14 +905,20 @@ namespace SysBot.Pokemon
                 toSend = trade.Receive;
                 poke.TradeData = toSend;
 
-                poke.SendNotification(this, "Injecting the requested Pokémon.");
                 if (Hub.Config.Distribution.AllowTraderOTInformation)
                 {
-                    if (!await SetBoxPkmWithSwappedIDDetailsSV(toSend, sav, poke, token).ConfigureAwait(false))
+                    var toSendOT = await SetOTDetails(toSend, sav, true, token);
+
+                    var la = new LegalityAnalysis(toSendOT);
+
+                    poke.SendNotification(this, "Injecting the requested Pokémon.");
+                    if (!la.Valid)
                     {
                         poke.SendNotification(this, "Uh oh! Something happened and I sent the original pokemon unchanged");
                         await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
                     }
+                    else
+                        await SetBoxPokemonAbsolute(BoxStartOffset, toSendOT, token, sav).ConfigureAwait(false);
                 }
                 else
                     await SetBoxPokemonAbsolute(BoxStartOffset, toSend, token, sav).ConfigureAwait(false);
@@ -1079,101 +1085,5 @@ namespace SysBot.Pokemon
             Name = name,
             Comment = $"Added automatically on {DateTime.Now:yyyy.MM.dd-hh:mm:ss} ({comment})",
         };
-        private async Task<bool> SetBoxPkmWithSwappedIDDetailsSV(PK9 toSend, SAV9SV sav, PokeTradeDetail<PK9> poke, CancellationToken token)
-        {
-            poke.SendNotification(this, "Checking if I can change OT info");
-
-            var cln = (PK9)toSend.Clone();
-
-            var tradepartner = await GetTradePartnerInfo(token).ConfigureAwait(false);
-
-            var changeallowed = OTChangeAllowed(toSend, tradepartner);
-
-            if (changeallowed)
-            {
-                poke.SendNotification(this, "Changing OT info to:");
-                cln.OT_Gender = tradepartner.Gender;
-                cln.TrainerTID7 = Convert.ToUInt32(tradepartner.TID7);
-                cln.TrainerSID7 = Convert.ToUInt32(tradepartner.SID7);
-                cln.Language = tradepartner.Language;
-                cln.OT_Name = tradepartner.TrainerName;
-                cln.Version = tradepartner.Game;
-                if (cln.HeldItem > -1 && cln.Species != (ushort)Species.Finizen) cln.SetDefaultNickname(); //Block nickname clear for item distro, Change Species as needed.
-                if (cln.HeldItem > 0 && cln.RibbonMarkDestiny == true) cln.SetDefaultNickname();
-
-                poke.SendNotification(this, "OT_Name: " + cln.OT_Name);
-                poke.SendNotification(this, "TID: " + cln.TrainerTID7);
-                poke.SendNotification(this, "SID: " + cln.TrainerSID7);
-                poke.SendNotification(this, "Gender: " + (Gender)cln.OT_Gender);
-                poke.SendNotification(this, "Language: " + (LanguageID)(cln.Language));
-                poke.SendNotification(this, "Game: " + (GameVersion)(cln.Version));
-
-                if (toSend.IsShiny)
-                    cln.SetShiny();
-
-                if (cln.Species == (ushort)Species.Dunsparce || cln.Species == (ushort)Species.Tandemaus) //Keep EC to maintain form
-                {
-                    if (cln.EncryptionConstant % 100 == 0)
-                        cln = KeepECModable(cln);
-                }
-                else
-                    if (cln.Met_Location != 30024) cln.SetRandomEC(); //OT for raidmon
-                cln.RefreshChecksum();
-                poke.SendNotification(this, "NPC user has their OT now.");
-            }
-
-            var tradesv = new LegalityAnalysis(cln); //Legality check, if fail, sends original PK9 instead
-
-            if (tradesv.Valid)
-            {
-                await SetBoxPokemonAbsolute(BoxStartOffset, cln, token, sav).ConfigureAwait(false);
-            }
-
-            return tradesv.Valid;
-        }
-        private static bool OTChangeAllowed(PK9 mon, TradePartnerSV trader1)
-        {
-            var changeallowed = true;
-
-            // Check if OT change is allowed for different situations
-            switch (mon.Species)
-            {
-                //Miraidon on Scarlet, no longer needed
-                case (ushort)Species.Miraidon:
-                    if (trader1.Game == (int)GameVersion.SL)
-                        changeallowed = false;
-                    break;
-                //Koraidon on Violet, no longer needed
-                case (ushort)Species.Koraidon:
-                    if (trader1.Game == (int)GameVersion.VL)
-                        changeallowed = false;
-                    break;
-                //Ditto will not OT change unless it has Destiny Mark
-                case (ushort)Species.Ditto:
-                    if (mon.RibbonMarkDestiny == true)
-                        changeallowed = true;
-                    else
-                        changeallowed = false;
-                    break;
-            }
-            switch (mon.OT_Name) //Stops mons with Specific OT from changing to User's OT
-            {
-                case "Blaines":
-                case "New Year 23":
-                case "Valentine":
-                    changeallowed = false;
-                    break;
-            }
-            return changeallowed;
-        }
-        private static PK9 KeepECModable(PK9 eckeep) //Maintain form for Dunsparce/Tandemaus
-        {
-            eckeep.SetRandomEC();
-
-            uint ecDelta = eckeep.EncryptionConstant % 100;
-            eckeep.EncryptionConstant -= ecDelta;
-
-            return eckeep;
-        }
     }
 }
