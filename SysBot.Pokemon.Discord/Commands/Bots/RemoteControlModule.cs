@@ -1,9 +1,9 @@
 ﻿using Discord.Commands;
+using PKHeX.Core;
 using SysBot.Base;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using PKHeX.Core;
 
 namespace SysBot.Pokemon.Discord
 {
@@ -141,6 +141,6 @@ namespace SysBot.Pokemon.Discord
         }
 
         private bool IsRemoteControlBot(RoutineExecutor<PokeBotState> botstate)
-            => botstate is RemoteControlBot or RemoteControlBotBS or RemoteControlBotLA or RemoteControlBotSV;
+            => botstate is RemoteControlBotSWSH or RemoteControlBotBS or RemoteControlBotLA or RemoteControlBotSV;
     }
 }

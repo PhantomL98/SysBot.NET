@@ -4,25 +4,20 @@ using SysBot.Base;
 using System;
 using System.Linq;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 using static SysBot.Base.SwitchButton;
-using static SysBot.Pokemon.PokeDataOffsets;
-using PKHeX.Core.AutoMod;
+using static SysBot.Pokemon.PokeDataOffsetsSWSH;
 
 namespace SysBot.Pokemon
 {
-    public partial class PokeTradeBot : PokeRoutineExecutor8, ICountBot
+    public class PokeTradeBotSWSH : PokeRoutineExecutor8SWSH, ICountBot
     {
         public static ISeedSearchHandler<PK8> SeedChecker = new NoSeedSearchHandler<PK8>();
         private readonly PokeTradeHub<PK8> Hub;
         private readonly TradeSettings TradeSettings;
         private readonly TradeAbuseSettings AbuseSettings;
         public ICountSettings Counts => TradeSettings;
-
-        private static readonly TrackedUserLog PreviousUsers = new();
-        private static readonly TrackedUserLog PreviousUsersDistribution = new();
-        private static readonly TrackedUserLog EncounteredUsers = new();
 
         /// <summary>
         /// Folder to dump received trade data to.
@@ -40,7 +35,7 @@ namespace SysBot.Pokemon
         /// </summary>
         public int FailedBarrier { get; private set; }
 
-        public PokeTradeBot(PokeTradeHub<PK8> hub, PokeBotState cfg) : base(cfg)
+        public PokeTradeBotSWSH(PokeTradeHub<PK8> hub, PokeBotState cfg) : base(cfg)
         {
             Hub = hub;
             TradeSettings = hub.Config.Trade;
@@ -62,7 +57,7 @@ namespace SysBot.Pokemon
                 RecentTrainerCache.SetRecentTrainer(sav);
                 await InitializeSessionOffsets(token).ConfigureAwait(false);
 
-                Log($"Starting main {nameof(PokeTradeBot)} loop.");
+                Log($"Starting main {nameof(PokeTradeBotSWSH)} loop.");
                 await InnerLoop(sav, token).ConfigureAwait(false);
             }
             catch (Exception e)
@@ -70,7 +65,7 @@ namespace SysBot.Pokemon
                 Log(e.Message);
             }
 
-            Log($"Ending {nameof(PokeTradeBot)} loop.");
+            Log($"Ending {nameof(PokeTradeBotSWSH)} loop.");
             await HardStop().ConfigureAwait(false);
         }
 
@@ -320,10 +315,10 @@ namespace SysBot.Pokemon
             var trainerName = await GetTradePartnerName(TradeMethod.LinkTrade, token).ConfigureAwait(false);
             var trainerTID = await GetTradePartnerTID7(TradeMethod.LinkTrade, token).ConfigureAwait(false);
             var trainerNID = await GetTradePartnerNID(token).ConfigureAwait(false);
-            RecordUtil<PokeTradeBot>.Record($"Initiating\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
+            RecordUtil<PokeTradeBotSWSH>.Record($"Initiating\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
             Log($"Found Link Trade partner: {trainerName}-{trainerTID} (ID: {trainerNID})");
 
-            var partnerCheck = await CheckPartnerReputation(poke, trainerNID, trainerName, token).ConfigureAwait(false);
+            var partnerCheck = await CheckPartnerReputation(this, poke, trainerNID, trainerName, AbuseSettings, token);
             if (partnerCheck != PokeTradeResult.Success)
             {
                 await ExitSeedCheckTrade(token).ConfigureAwait(false);
@@ -391,7 +386,7 @@ namespace SysBot.Pokemon
             if (SearchUtil.HashByDetails(received) == SearchUtil.HashByDetails(toSend) && received.Checksum == toSend.Checksum)
             {
                 Log("User did not complete the trade.");
-                RecordUtil<PokeTradeBot>.Record($"Cancelled\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\\t{poke.ID}\t{toSend.EncryptionConstant:X8}\t{offered.EncryptionConstant:X8}");
+                RecordUtil<PokeTradeBotSWSH>.Record($"Cancelled\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\\t{poke.ID}\t{toSend.EncryptionConstant:X8}\t{offered.EncryptionConstant:X8}");
                 await ExitTrade(false, token).ConfigureAwait(false);
                 return PokeTradeResult.TrainerTooSlow;
             }
@@ -400,143 +395,15 @@ namespace SysBot.Pokemon
             Log("User completed the trade.");
             poke.TradeFinished(this, received);
 
-            RecordUtil<PokeTradeBot>.Record($"Finished\t{trainerNID:X16}\t{toSend.EncryptionConstant:X8}\t{received.EncryptionConstant:X8}");
+            RecordUtil<PokeTradeBotSWSH>.Record($"Finished\t{trainerNID:X16}\t{toSend.EncryptionConstant:X8}\t{received.EncryptionConstant:X8}");
 
             // Only log if we completed the trade.
             UpdateCountsAndExport(poke, received, toSend);
+
+            // Log for Trade Abuse tracking.
+            LogSuccessfulTrades(poke, trainerNID, trainerName);
+
             await ExitTrade(false, token).ConfigureAwait(false);
-            return PokeTradeResult.Success;
-        }
-
-        private async Task<PokeTradeResult> CheckPartnerReputation(PokeTradeDetail<PK8> poke, ulong TrainerNID, string TrainerName, CancellationToken token)
-        {
-            bool quit = false;
-            var user = poke.Trainer;
-            var isDistribution = poke.Type == PokeTradeType.Random;
-            var useridmsg = isDistribution ? "" : $" ({user.ID})";
-            var list = isDistribution ? PreviousUsersDistribution : PreviousUsers;
-
-            int wlIndex = AbuseSettings.WhiteListedIDs.List.FindIndex(z => z.ID == TrainerNID);
-            DateTime wlCheck = DateTime.Now;
-            bool wlAllow = false;
-
-            if (wlIndex > -1)
-            {
-                ulong wlID = AbuseSettings.WhiteListedIDs.List[wlIndex].ID;
-                var wlExpires = AbuseSettings.WhiteListedIDs.List[wlIndex].Expiration;
-
-                if (wlID != 0 && wlExpires <= wlCheck)
-                {
-                    AbuseSettings.WhiteListedIDs.RemoveAll(z => z.ID == TrainerNID);
-                    EchoUtil.Echo($"Removed {TrainerName} from Whitelist due to an expired duration.");
-                    wlAllow = false;
-                }
-                else if (wlID != 0)
-                    wlAllow = true;
-            }
-
-            var cooldown = list.TryGetPrevious(TrainerNID);
-            if (cooldown != null)
-            {
-                var delta = DateTime.Now - cooldown.Time;
-                Log($"Last saw {TrainerName} {delta.TotalMinutes:F1} minutes ago (OT: {TrainerName}).");
-
-                list.TryRegister(TrainerNID, TrainerName);
-
-                var cd = AbuseSettings.TradeCooldown;
-                if (cd != 0 && TimeSpan.FromMinutes(cd) > delta && !wlAllow)
-                {
-                    list.TryRegister(TrainerNID, TrainerName);
-                    poke.Notifier.SendNotification(this, poke, "You have ignored the trade cooldown set by the bot owner. The owner has been notified.");
-                    var msg = $"Found {TrainerName}{useridmsg} ignoring the {cd} minute trade cooldown. Last encountered {delta.TotalMinutes:F1} minutes ago.";
-                    if (AbuseSettings.EchoNintendoOnlineIDCooldown)
-                        msg += $"\nID: {TrainerNID}";
-                    if (!string.IsNullOrWhiteSpace(AbuseSettings.CooldownAbuseEchoMention))
-                        msg = $"{AbuseSettings.CooldownAbuseEchoMention} {msg}";
-                    EchoUtil.Echo(msg);
-                    quit = true;
-                }
-            }
-
-            if (!isDistribution)
-            {
-                var previousEncounter = EncounteredUsers.TryRegister(poke.Trainer.ID, TrainerName, poke.Trainer.ID);
-                if (previousEncounter != null && previousEncounter.Name != TrainerName)
-                {
-                    if (AbuseSettings.TradeAbuseAction != TradeAbuseAction.Ignore)
-                    {
-                        if (AbuseSettings.TradeAbuseAction == TradeAbuseAction.BlockAndQuit)
-                        {
-                            await BlockUser(token).ConfigureAwait(false);
-                            if (AbuseSettings.BanIDWhenBlockingUser)
-                            {
-                                AbuseSettings.BannedIDs.AddIfNew(new[] { GetReference(TrainerName, TrainerNID, "in-game block for sending to multiple in-game players") });
-                                Log($"Added {TrainerNID} to the BannedIDs list.");
-                            }
-                        }
-                        quit = true;
-                    }
-
-                    var msg = $"Found {TrainerName}{useridmsg} sending to multiple in-game players. Previous OT: {previousEncounter.Name}, Current OT: {TrainerName}";
-                    if (AbuseSettings.EchoNintendoOnlineIDMultiRecipients)
-                        msg += $"\nID: {TrainerNID}";
-                    if (!string.IsNullOrWhiteSpace(AbuseSettings.MultiRecipientEchoMention))
-                        msg = $"{AbuseSettings.MultiRecipientEchoMention} {msg}";
-                    EchoUtil.Echo(msg);
-                }
-            }
-
-            if (quit)
-                return PokeTradeResult.SuspiciousActivity;
-
-            // Try registering the partner in our list of recently seen.
-            // Get back the details of their previous interaction.
-            var previous = isDistribution
-                ? list.TryRegister(TrainerNID, TrainerName)
-                : list.TryRegister(TrainerNID, TrainerName, poke.Trainer.ID);
-            if (previous != null && previous.NetworkID == TrainerNID && previous.RemoteID != user.ID && !isDistribution)
-            {
-                var delta = DateTime.Now - previous.Time;
-                if (delta < TimeSpan.FromMinutes(AbuseSettings.TradeAbuseExpiration) && AbuseSettings.TradeAbuseAction != TradeAbuseAction.Ignore)
-                {
-                    if (AbuseSettings.TradeAbuseAction == TradeAbuseAction.BlockAndQuit)
-                    {
-                        await BlockUser(token).ConfigureAwait(false);
-                        if (AbuseSettings.BanIDWhenBlockingUser)
-                        {
-                            AbuseSettings.BannedIDs.AddIfNew(new[] { GetReference(TrainerName, TrainerNID, "in-game block for multiple accounts") });
-                            Log($"Added {TrainerNID} to the BannedIDs list.");
-                        }
-                    }
-                    quit = true;
-                }
-
-                var msg = $"Found {TrainerName}{useridmsg} using multiple accounts.\nPreviously encountered {previous.Name} ({previous.RemoteID}) {delta.TotalMinutes:F1} minutes ago on OT: {TrainerName}.";
-                if (AbuseSettings.EchoNintendoOnlineIDMulti)
-                    msg += $"\nID: {TrainerNID}";
-                if (!string.IsNullOrWhiteSpace(AbuseSettings.MultiAbuseEchoMention))
-                    msg = $"{AbuseSettings.MultiAbuseEchoMention} {msg}";
-                EchoUtil.Echo(msg);
-            }
-
-            if (quit)
-                return PokeTradeResult.SuspiciousActivity;
-
-            var entry = AbuseSettings.BannedIDs.List.Find(z => z.ID == TrainerNID);
-            if (entry != null)
-            {
-                if (AbuseSettings.BlockDetectedBannedUser)
-                    await BlockUser(token).ConfigureAwait(false);
-
-                var msg = $"{TrainerName}{useridmsg} is a banned user, and was encountered in-game using OT: {TrainerName}.";
-                if (!string.IsNullOrWhiteSpace(entry.Comment))
-                    msg += $"\nUser was banned for: {entry.Comment}";
-                if (!string.IsNullOrWhiteSpace(AbuseSettings.BannedIDMatchEchoMention))
-                    msg = $"{AbuseSettings.BannedIDMatchEchoMention} {msg}";
-                EchoUtil.Echo(msg);
-                return PokeTradeResult.SuspiciousActivity;
-            }
-
             return PokeTradeResult.Success;
         }
 
@@ -1169,19 +1036,6 @@ namespace SysBot.Pokemon
                 await Click(A, 1_500, token).ConfigureAwait(false);
             await Click(B, 1_500, token).ConfigureAwait(false);
             await Click(B, 1_500, token).ConfigureAwait(false);
-        }
-
-        // Blocks a user from the box during in-game trades.
-        protected async Task BlockUser(CancellationToken token)
-        {
-            Log("Blocking user in-game...");
-            await PressAndHold(RSTICK, 0_750, 0, token).ConfigureAwait(false);
-            await Click(DUP, 0_300, token).ConfigureAwait(false);
-            await Click(A, 1_300, token).ConfigureAwait(false);
-            await Click(A, 1_300, token).ConfigureAwait(false);
-            await Click(DUP, 0_300, token).ConfigureAwait(false);
-            await Click(A, 1_100, token).ConfigureAwait(false);
-            await Click(A, 1_100, token).ConfigureAwait(false);
         }
 
         private async Task<bool> CheckIfSearchingForLinkTradePartner(CancellationToken token)
