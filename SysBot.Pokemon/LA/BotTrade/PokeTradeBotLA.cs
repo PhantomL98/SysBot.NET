@@ -755,7 +755,7 @@ namespace SysBot.Pokemon
                     var msg = $"Found {TrainerName}{useridmsg} ignoring the {cd} minute trade cooldown. Last encountered {delta.TotalMinutes:F1} minutes ago.";
                     list.TryRegister(TrainerNID, TrainerName);
                     if (AbuseSettings.EchoNintendoOnlineIDCooldown)
-                    msg += $"\nID: {TrainerNID}";
+                        msg += $"\nID: {TrainerNID}";
                     if (!string.IsNullOrWhiteSpace(AbuseSettings.CooldownAbuseEchoMention))
                         msg = $"{AbuseSettings.CooldownAbuseEchoMention} {msg}";
                     EchoUtil.Echo(msg);

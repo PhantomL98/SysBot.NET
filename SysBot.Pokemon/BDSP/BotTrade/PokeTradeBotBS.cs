@@ -816,7 +816,7 @@ namespace SysBot.Pokemon
                     poke.Notifier.SendNotification(this, poke, "You have ignored the trade cooldown set by the bot owner. The owner has been notified.");
                     var msg = $"Found {TrainerName}{useridmsg} ignoring the {cd} minute trade cooldown. Last encountered {delta.TotalMinutes:F1} minutes ago.";
                     if (AbuseSettings.EchoNintendoOnlineIDCooldown)
-                    msg += $"\nID: {TrainerNID}";
+                        msg += $"\nID: {TrainerNID}";
                     if (!string.IsNullOrWhiteSpace(AbuseSettings.CooldownAbuseEchoMention))
                         msg = $"{AbuseSettings.CooldownAbuseEchoMention} {msg}";
                     EchoUtil.Echo(msg);

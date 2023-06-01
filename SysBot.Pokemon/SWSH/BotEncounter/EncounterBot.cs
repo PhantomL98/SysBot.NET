@@ -92,9 +92,9 @@ namespace SysBot.Pokemon
             var mode = Settings.ContinueAfterMatch;
             var msg = $"Result found!\n{print}\n" + mode switch
             {
-                ContinueAfterMatch.Continue             => "Continuing...",
+                ContinueAfterMatch.Continue => "Continuing...",
                 ContinueAfterMatch.PauseWaitAcknowledge => "Waiting for instructions to continue.",
-                ContinueAfterMatch.StopExit             => "Stopping routine execution; restart the bot to search again.",
+                ContinueAfterMatch.StopExit => "Stopping routine execution; restart the bot to search again.",
                 _ => throw new ArgumentOutOfRangeException("Match result type was invalid.", nameof(ContinueAfterMatch)),
 
             };

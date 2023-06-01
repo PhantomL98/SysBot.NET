@@ -37,7 +37,7 @@ namespace SysBot.Pokemon
             APILegality.AllowTrainerOverride = cfg.AllowTrainerDataOverride;
             APILegality.AllowBatchCommands = cfg.AllowBatchCommands;
             APILegality.PrioritizeGame = cfg.PrioritizeGame;
-            APILegality.PrioritizeGameVersion= cfg.PrioritizeGameVersion;
+            APILegality.PrioritizeGameVersion = cfg.PrioritizeGameVersion;
             APILegality.SetBattleVersion = cfg.SetBattleVersion;
             APILegality.Timeout = cfg.Timeout;
         }

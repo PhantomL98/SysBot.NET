@@ -162,13 +162,13 @@ namespace SysBot.Pokemon.Discord
                 wlExpires = DateTime.MaxValue;
                 wlRef = GetReference(wlParams[1], Convert.ToUInt64(wlParams[0]), wlExpires, wlParams[2]);
             }
-            
+
             SysCordSettings.HubConfig.TradeAbuse.WhiteListedIDs.AddIfNew(new[] { wlRef });
             msg += $"{wlParams[1]}({wlParams[0]}) added to the whitelist";
             await ReplyAsync(Format.Code(msg)).ConfigureAwait(false);
         }
 
-            private RemoteControlAccess GetReference(IUser channel) => new()
+        private RemoteControlAccess GetReference(IUser channel) => new()
         {
             ID = channel.Id,
             Name = channel.Username,
@@ -181,7 +181,7 @@ namespace SysBot.Pokemon.Discord
             Name = "Manual",
             Comment = $"Added by {Context.User.Username} on {DateTime.Now:yyyy.MM.dd-hh:mm:ss}",
         };
-        
+
         private RemoteControlAccess GetReference(string name, ulong id, DateTime expiration, string comment) => new()
         {
             ID = id,

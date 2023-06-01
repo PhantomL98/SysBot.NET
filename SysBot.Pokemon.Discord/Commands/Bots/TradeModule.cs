@@ -126,7 +126,7 @@ namespace SysBot.Pokemon.Discord
         [Alias("tu", "tradeOther")]
         [Summary("Makes the bot trade the mentioned user the attached file.")]
         [RequireSudo]
-        public async Task TradeAsyncAttachUser([Summary("Trade Code")] int code, [Remainder]string _)
+        public async Task TradeAsyncAttachUser([Summary("Trade Code")] int code, [Remainder] string _)
         {
             if (Context.Message.MentionedUsers.Count > 1)
             {

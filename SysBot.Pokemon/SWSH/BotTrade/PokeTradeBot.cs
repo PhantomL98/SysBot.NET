@@ -158,7 +158,7 @@ namespace SysBot.Pokemon
             }
 
             const int interval = 10;
-            if (waitCounter % interval == interval-1 && Hub.Config.AntiIdle)
+            if (waitCounter % interval == interval - 1 && Hub.Config.AntiIdle)
                 await Click(B, 1_000, token).ConfigureAwait(false);
             else
                 await Task.Delay(1_000, token).ConfigureAwait(false);
@@ -419,12 +419,12 @@ namespace SysBot.Pokemon
             int wlIndex = AbuseSettings.WhiteListedIDs.List.FindIndex(z => z.ID == TrainerNID);
             DateTime wlCheck = DateTime.Now;
             bool wlAllow = false;
-            
+
             if (wlIndex > -1)
             {
                 ulong wlID = AbuseSettings.WhiteListedIDs.List[wlIndex].ID;
                 var wlExpires = AbuseSettings.WhiteListedIDs.List[wlIndex].Expiration;
-                
+
                 if (wlID != 0 && wlExpires <= wlCheck)
                 {
                     AbuseSettings.WhiteListedIDs.RemoveAll(z => z.ID == TrainerNID);
@@ -706,7 +706,7 @@ namespace SysBot.Pokemon
                             }
 
                     }
-                    toSend.ClearRelearnMoves(); 
+                    toSend.ClearRelearnMoves();
                     toSend.SetSuggestedMoves(true);
                     for (ushort i = 0; i < 4; i++) toSend.HealPPIndex(i);
                     if (!toSend.IsNicknamed) toSend.ClearNickname();
@@ -729,7 +729,7 @@ namespace SysBot.Pokemon
                         } while (toSend.ShinyXor != 1);
                     }
                 }
-                toSend.SetRandomEC(); 
+                toSend.SetRandomEC();
                 toSend.RefreshChecksum();
 
                 DumpPokemon("C:\\Pokemon\\Bot Dats\\SwShSys_Dump", "tester", toSend);
