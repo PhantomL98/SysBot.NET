@@ -142,6 +142,10 @@ namespace SysBot.Pokemon
             var useridmsg = isDistribution ? "" : $" ({user.ID})";
             var list = isDistribution ? PreviousUsersDistribution : PreviousUsers;
 
+            int wlIndex = AbuseSettings.WhiteListedIDs.List.FindIndex(z => z.ID == TrainerNID);
+            DateTime wlCheck = DateTime.Now;
+            bool wlAllow = false;
+
             // Matches to a list of banned NIDs, in case the user ever manages to enter a trade.
             var entry = AbuseSettings.BannedIDs.List.Find(z => z.ID == TrainerNID);
             if (entry != null)
@@ -158,6 +162,21 @@ namespace SysBot.Pokemon
                 return PokeTradeResult.SuspiciousActivity;
             }
 
+            if (wlIndex > -1)
+            {
+                ulong wlID = AbuseSettings.WhiteListedIDs.List[wlIndex].ID;
+                var wlExpires = AbuseSettings.WhiteListedIDs.List[wlIndex].Expiration;
+
+                if (wlID != 0 && wlExpires <= wlCheck)
+                {
+                    AbuseSettings.WhiteListedIDs.RemoveAll(z => z.ID == TrainerNID);
+                    EchoUtil.Echo($"Removed {TrainerName} from Whitelist due to an expired duration.");
+                    wlAllow = false;
+                }
+                else if (wlID != 0)
+                    wlAllow = true;
+            }
+
             // Check within the trade type (distribution or non-Distribution).
             var previous = list.TryGetPreviousNID(TrainerNID);
             if (previous != null)
@@ -167,7 +186,7 @@ namespace SysBot.Pokemon
 
                 // Allows setting a cooldown for repeat trades. If the same user is encountered within the cooldown period for the same trade type, the user is warned and the trade will be ignored.
                 var cd = AbuseSettings.TradeCooldown;     // Time they must wait before trading again.
-                if (cd != 0 && TimeSpan.FromMinutes(cd) > delta)
+                if (cd != 0 && TimeSpan.FromMinutes(cd) > delta && !wlAllow)
                 {
                     var wait = TimeSpan.FromMinutes(cd) - delta;
                     poke.Notifier.SendNotification(bot, poke, $"You are still on trade cooldown, and cannot trade for another {wait.TotalMinutes:F1} minute(s).");

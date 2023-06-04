@@ -1,8 +1,10 @@
 ﻿using PKHeX.Core;
+using Discord;
 using System;
 using System.Threading.Tasks;
 using System.Threading;
-using static SysBot.Pokemon.PokeDataOffsets;
+using static SysBot.Pokemon.PokeDataOffsetsSWSH;
+using SysBot.Base;
 
 namespace SysBot.Pokemon
 {
@@ -13,7 +15,7 @@ namespace SysBot.Pokemon
      *      
      ***/
 
-    public partial class PokeTradeBot : PokeRoutineExecutor8, ICountBot
+    public partial class PokeTradeBotSWSH : PokeRoutineExecutor8SWSH, ICountBot
     {
         public async Task<(bool, PK8)> SetOTDetails(PK8 toSend, PartnerDataHolder partner, SAV8SWSH sav, bool clearName, CancellationToken token)
         {
@@ -31,7 +33,7 @@ namespace SysBot.Pokemon
             if (clearName)
                 cln.ClearNickname();
 
-            cln.PID = ShinyKeeper(cln); // If shiny, change PID to same shiny type as before for OT change.
+            //cln.PID = ShinyKeeper(cln, toSend); // If shiny, change PID to same shiny type as before for OT change.
 
             cln.SetRandomEC();
             cln.RefreshChecksum();

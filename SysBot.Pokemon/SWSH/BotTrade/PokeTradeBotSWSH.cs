@@ -1,6 +1,8 @@
 ﻿using PKHeX.Core;
 using PKHeX.Core.Searching;
+using PKHeX.Core.AutoMod;
 using SysBot.Base;
+using SysBot.Fraudious;
 using System;
 using System.Linq;
 using System.Net.Sockets;
@@ -11,7 +13,7 @@ using static SysBot.Pokemon.PokeDataOffsetsSWSH;
 
 namespace SysBot.Pokemon
 {
-    public class PokeTradeBotSWSH : PokeRoutineExecutor8SWSH, ICountBot
+    public partial class PokeTradeBotSWSH : PokeRoutineExecutor8SWSH, ICountBot
     {
         public static ISeedSearchHandler<PK8> SeedChecker = new NoSeedSearchHandler<PK8>();
         private readonly PokeTradeHub<PK8> Hub;

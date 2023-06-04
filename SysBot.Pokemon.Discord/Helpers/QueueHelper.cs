@@ -29,6 +29,25 @@ namespace SysBot.Pokemon.Discord
 
                 // Notify in channel
                 await context.Channel.SendMessageAsync(msg).ConfigureAwait(false);
+                string embedMsg;
+                embedMsg = $"Your Pokemon: {(Species)trade.Species}";
+                embedMsg += $"OT_Name: {trade.OT_Name}\r\n";
+                embedMsg += $"TID: {trade.TrainerTID7}\r\n";
+                embedMsg += $"SID: {trade.TrainerSID7}\r\n";
+                embedMsg += $"Gender: {(Gender)trade.OT_Gender}\r\n";
+                embedMsg += $"Language: {(LanguageID)(trade.Language)}\r\n";
+                embedMsg += $"Game: {(GameVersion)(trade.Version)}\r\n";
+                EmbedBuilder builder = new EmbedBuilder
+                {
+                    //Optional color
+                    Color = Color.Blue,
+                    Description = embedMsg,
+                    ThumbnailUrl = "https://img.pokemondb.net/sprites/home/normal/spheal.png",
+                    Title = "Attempting to change Pokémon info to:",
+
+                }; 
+                await context.Channel.SendMessageAsync(msg, false, builder.Build()).ConfigureAwait(false);
+
                 // Notify in PM to mirror what is said in the channel.
                 await trader.SendMessageAsync($"{msg}\nYour trade code will be **{code:0000 0000}**.").ConfigureAwait(false);
 

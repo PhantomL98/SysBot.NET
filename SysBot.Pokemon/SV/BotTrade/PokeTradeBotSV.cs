@@ -12,7 +12,7 @@ using static SysBot.Pokemon.PokeDataOffsetsSV;
 namespace SysBot.Pokemon
 {
     // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
-    public class PokeTradeBotSV : PokeRoutineExecutor9SV, ICountBot
+    public partial class PokeTradeBotSV : PokeRoutineExecutor9SV, ICountBot
     {
         private readonly PokeTradeHub<PK9> Hub;
         private readonly TradeSettings TradeSettings;
