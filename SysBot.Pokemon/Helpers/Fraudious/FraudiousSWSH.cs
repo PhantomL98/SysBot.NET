@@ -23,7 +23,7 @@ namespace SysBot.Pokemon
     {
         private async Task<(PK8 toSend, PokeTradeResult check)> HandleRandomLedy(bool Fraudious, SAV8SWSH sav, PokeTradeDetail<PK8> poke, PK8 offered, PK8 toSend, PartnerDataHolder partner, CancellationToken token)
         {
-            Fraudiouscl fraudious = new Fraudiouscl();
+            Fraudiouscl fraudious = new();
             // Allow the trade partner to do a Ledy swap.
             var config = Hub.Config.Distribution;
 
@@ -149,6 +149,12 @@ namespace SysBot.Pokemon
             }
             else if (config.LedyQuitIfNoMatch)
             {
+                var msg = $"Pokémon: {(Species)offered.Species}";
+                msg += $"\nNickname: {offered.Nickname}";
+                msg += $"\nTrader: {partner.TrainerName}";
+
+                await fraudious.EmbedAlertMessage(offered, offered.CanGigantamax, offered.FormArgument, msg, "Bad Request Attempted:").ConfigureAwait(false);
+
                 return (toSend, PokeTradeResult.TrainerRequestBad);
             }
 

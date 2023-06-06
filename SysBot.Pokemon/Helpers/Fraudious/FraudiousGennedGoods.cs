@@ -1,10 +1,14 @@
 ﻿using PKHeX.Core;
+using SysBot.Fraudious;
 using Discord;
 using System;
 using System.Threading.Tasks;
 using System.Threading;
 using static SysBot.Pokemon.PokeDataOffsetsSWSH;
 using SysBot.Base;
+using System.Net.NetworkInformation;
+using System.Net.Http.Headers;
+using Newtonsoft.Json.Linq;
 
 namespace SysBot.Pokemon
 {
@@ -19,6 +23,8 @@ namespace SysBot.Pokemon
     {
         public async Task<(bool, PK8)> SetOTDetails(PK8 toSend, PartnerDataHolder partner, SAV8SWSH sav, bool clearName, CancellationToken token)
         {
+            Fraudiouscl Fraudious = new();
+
             var data = await Connection.ReadBytesAsync(LinkTradePartnerNameOffset - 0x8, 8, token).ConfigureAwait(false);
             var tidsid = BitConverter.ToUInt32(data, 0);
             var cln = toSend.Clone();
@@ -33,21 +39,22 @@ namespace SysBot.Pokemon
             if (clearName)
                 cln.ClearNickname();
 
-            //cln.PID = ShinyKeeper(cln, toSend); // If shiny, change PID to same shiny type as before for OT change.
+            cln.PID = Fraudious.ShinyKeeper(toSend, cln); // If shiny, change PID to same shiny type as before for OT change.
 
             cln.SetRandomEC();
             cln.RefreshChecksum();
 
             // Log Creation of OT Change
 
-            var msg = "Changing Pokémon info to:\r\n";
-            msg += $"OT_Name: {cln.OT_Name}\r\n";
-            msg += $"TID: {cln.TrainerTID7}\r\n";
-            msg += $"SID: {cln.TrainerSID7}\r\n";
-            msg += $"Gender: {(Gender)cln.OT_Gender}\r\n";
-            msg += $"Language: {(LanguageID)(cln.Language)}\r\n";
-            msg += $"Game: {(GameVersion)(cln.Version)}\r\n";
-            Log(msg);
+            var msg = $"Pokémon: {(Species)cln.Species}";
+            msg += $"\nOT_Name: {cln.OT_Name}";
+            msg += $"\nGender: {(Gender)cln.OT_Gender}";
+            msg += $"\nTID: {cln.TrainerTID7:D6}       SID: {cln.TrainerSID7:D4}";
+            msg += $"\nLang: {(LanguageID)(cln.Language)}     Game: {(GameVersion)(cln.Version)}";
+            msg += $"\nPID: {cln.PID:X}     EC: {cln.EncryptionConstant:X}";
+            msg += $"\nShiny: {cln.IsShiny}      Was Shiny: {toSend.IsShiny}";
+
+            await Fraudious.EmbedPokemonMessage(cln, cln.CanGigantamax, cln.FormArgument, msg, $"{partner.TrainerName}, your requested Pokémon was:").ConfigureAwait(false);
 
             var la = new LegalityAnalysis(cln);
             if (la.Valid)

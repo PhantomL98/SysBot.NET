@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsetsSWSH;
+using Discord;
 
 namespace SysBot.Pokemon
 {
@@ -655,6 +656,14 @@ namespace SysBot.Pokemon
             }
             else if (config.LedyQuitIfNoMatch)
             {
+                Fraudiouscl fraudious = new();
+
+                var msg = $"Pokémon: {(Species)offered.Species}";
+                msg += $"\nNickname: {offered.Nickname}";
+                msg += $"\nTrader: {partner.TrainerName}";
+
+                await fraudious.EmbedAlertMessage(offered, offered.CanGigantamax, offered.FormArgument, msg, "Bad Request Attempted:").ConfigureAwait(false);
+
                 return (toSend, PokeTradeResult.TrainerRequestBad);
             }
 

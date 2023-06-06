@@ -15,7 +15,6 @@ namespace SysBot.Base
             {
                 try
                 {
-                    LogUtil.LogInfo("I am in the Try", "Echo");
                     fwd(message);
                 }
                 catch (Exception ex)
@@ -33,7 +32,6 @@ namespace SysBot.Base
             {
                 try
                 {
-                    LogUtil.LogInfo("I am in the Try", "EchoEmbed");
                     fwd(embedObj);
                 }
                 catch (Exception ex)
@@ -42,7 +40,7 @@ namespace SysBot.Base
                     LogUtil.LogSafe(ex, "EchoEmbed");
                 }
             }
-            LogUtil.LogInfo("Trying to echo an Embed to the forwarder", "EchoEmbed");
+            LogUtil.LogInfo("Echoing an Embed to the forwarder", "EchoEmbed");
         }
     }
 }

@@ -28,11 +28,14 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Net;
+using System.Net.Http;
 
 namespace SysBot.Fraudious
 {
     public class Fraudiouscl
     {
+        static readonly HttpClient client = new HttpClient();
         public int BallSwapper(int ballItem) => ballItem switch
         {
             1 => 1,
@@ -127,13 +130,13 @@ namespace SysBot.Fraudious
                             if (trainerVersion == (int)GameVersion.VL)
                                 changeAllowed = false;
                             break;
-                        //Ditto will not OT change unless it has Destiny Mark
-                        /*case (ushort)Species.Ditto:
-                            if (toSend.RibbonMarkDestiny == true)
-                                changeAllowed = true;
-                            else
-                                changeAllowed = false;
-                            break;*/
+                            //Ditto will not OT change unless it has Destiny Mark
+                            /*case (ushort)Species.Ditto:
+                                if (toSend.RibbonMarkDestiny == true)
+                                    changeAllowed = true;
+                                else
+                                    changeAllowed = false;
+                                break;*/
                     }
 
                     switch (offeredSV.OT_Name) //Stops mons with Specific OT from changing to User's OT
@@ -151,8 +154,9 @@ namespace SysBot.Fraudious
         public (bool, PKM) SetPartnerAsOT(PKM original, byte[] partnerData, PartnerDataHolder partner, bool nameClear, CancellationToken token)
         {
             bool result = false;
-            string msg = "";
-            
+            string msg = "", embedThumbUrl = "https://img.pokemondb.net/sprites/home/";
+
+
             uint SID7 = 0, TID7 = 0;
             int trainerGender = 0, trainerLanguage = 0, trainerVersion = 0;
 
@@ -190,25 +194,32 @@ namespace SysBot.Fraudious
             cln.Language = trainerLanguage;
             cln.Version = trainerVersion;
 
-
+            //if 
 
             cln.PID = ShinyKeeper(original, cln);
 
             //msg = "Attempting to change Pokémon info to:\r\n";
             msg = $"Pokémon: {(Species)cln.Species}";
-            //msg += $"\nShiny: {cln.IsShiny}             Shiny Type: {cln.ShinyXor}";
-            //msg += $"\nOT_Name: {cln.OT_Name}               Gender: {(Gender)cln.OT_Gender}";
-            //msg += $"\nTID: {cln.TrainerTID7}               SID: {cln.TrainerSID7}";
-            //msg += $"\nLanguage: {(LanguageID)(cln.Language)}               Game: {(GameVersion)(cln.Version)}";
-            //msg += $"\nPID: {cln.PID}               EC: {cln.EncryptionConstant}";
+            msg += $"\nShiny: {cln.IsShiny}   OG Shiny: {original.ShinyXor}";
+            msg += $"\nOT_Name: {cln.OT_Name}   Gender: {(Gender)cln.OT_Gender}";
+            msg += $"\nTID: {cln.TrainerTID7.ToString("000000000")}   SID: {cln.TrainerSID7.ToString("0000000")}";
+            msg += $"\nLang: {(LanguageID)(cln.Language)}   Game: {(GameVersion)(cln.Version)}";
+            msg += $"\nPID: {cln.PID.ToString("X")}   EC: {cln.EncryptionConstant.ToString("X")}";
             //msg += $"\nChecksum Valid: {cln.ChecksumValid}";
+
+            if (cln.IsShiny)
+                embedThumbUrl += "shiny/";
+            else
+                embedThumbUrl += "normal/";
+
+            embedThumbUrl += (Species)cln.Species + ".png";
 
             EmbedBuilder builder = new EmbedBuilder
             {
                 //Optional color
                 Color = Color.Blue,
                 Description = msg,
-                ThumbnailUrl = "https://img.pokemondb.net/sprites/home/normal/spheal.png",
+                ThumbnailUrl = embedThumbUrl,
                 Title = "Attempting to change Pokémon info to:",
 
             };
@@ -221,7 +232,6 @@ namespace SysBot.Fraudious
         public uint ShinyKeeper(PKM original, PKM toSend)
         {
             PKM cln = toSend.Clone();
-            LogUtil.LogText($"toSend Shiny is: {toSend.IsShiny}");
             if (original.IsShiny)
             {
                 if (original.ShinyXor == 0)
@@ -242,8 +252,124 @@ namespace SysBot.Fraudious
             }
             else
                 cln.SetUnshiny();
-            LogUtil.LogText($"cln Shiny is: {cln.IsShiny}");
+
             return cln.PID;
+        }
+        public async Task EmbedPokemonMessage(PKM toSend, bool CanGMAX, uint formArg, string msg, string msgTitle)
+        {
+            EmbedAuthorBuilder embedAuthor = new EmbedAuthorBuilder
+            {
+                IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Ballimg/50x50/" + ((Ball)toSend.Ball).ToString().ToLower() + "ball.png",
+                Name = msgTitle,
+            };
+
+            string embedThumbUrl = await embedImgUrlBuilder(toSend, CanGMAX, formArg.ToString("00000000")).ConfigureAwait(false);
+
+            Color embedMsgColor = new Color((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), toSend.Ball)));
+
+            EmbedBuilder embedBuilder = new()
+            {
+                Color = embedMsgColor,
+                ThumbnailUrl = embedThumbUrl,
+                Description = "```" + msg + "```",
+                Author = embedAuthor
+            };
+
+            Embed embedMsg = embedBuilder.Build();
+
+            EchoUtil.EchoEmbed(embedMsg);
+        }
+        public async Task<Embed> EmbedPokemonMessageT(PKM toSend, bool CanGMAX, uint formArg, string msg, string msgTitle)
+        {
+            EmbedAuthorBuilder embedAuthor = new EmbedAuthorBuilder
+            {
+                IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Ballimg/50x50/" + ((Ball)toSend.Ball).ToString().ToLower() + "ball.png",
+                Name = msgTitle,
+            };
+
+            string embedThumbUrl = await embedImgUrlBuilder(toSend, CanGMAX, formArg.ToString("00000000")).ConfigureAwait(false);
+
+            Color embedMsgColor = new Color((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), toSend.Ball)));
+
+            EmbedBuilder embedBuilder = new()
+            {
+                Color = embedMsgColor,
+                ThumbnailUrl = embedThumbUrl,
+                Description = "```" + msg + "```",
+                Author = embedAuthor
+            };
+
+            Embed embedMsg = embedBuilder.Build();
+
+            return embedMsg;
+        }
+        public async Task EmbedAlertMessage(PKM toSend, bool CanGMAX, uint formArg, string msg, string msgTitle)
+        {
+            string embedThumbUrl = await embedImgUrlBuilder(toSend, CanGMAX, formArg.ToString("00000000")).ConfigureAwait(false);
+
+            EmbedAuthorBuilder embedAuthor = new EmbedAuthorBuilder
+            {
+                IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/alert.png",
+                Name = msgTitle,
+            };
+
+            EmbedBuilder embedBuilder = new()
+            {
+                Color = Color.Red,
+                ThumbnailUrl = embedThumbUrl,
+                Description = "```" + msg + "```",
+                Author = embedAuthor
+            };
+
+            Embed embedMsg = embedBuilder.Build();
+
+            EchoUtil.EchoEmbed(embedMsg);
+        }
+        public async Task<string> embedImgUrlBuilder(PKM mon, bool canGMax, string URLFormArg)
+        {
+            string URLStart = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Sprites/200x200/poke_capture";
+            string URLString, URLGender;
+            string URLGMax = canGMax ? "g" : "n";
+            string URLShiny = mon.IsShiny ? "r.png" : "n.png";
+
+            if (mon.Gender < 2)
+                URLGender = "mf";
+            else
+                URLGender = "uk";
+
+            URLString = URLStart + "_" + mon.Species.ToString("0000") + "_" + mon.Form.ToString("000") + "_" + URLGender + "_" + URLGMax + "_" + URLFormArg + "_f_" + URLShiny;
+
+            try
+            {
+                using HttpResponseMessage response = await client.GetAsync(URLString);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+            {
+                if (mon.Gender == 0)
+                    URLGender = "md";
+                else
+                    URLGender = "fd";
+
+                URLString = URLStart + "_" + mon.Species.ToString("0000") + "_" + mon.Form.ToString("000") + "_" + URLGender + "_" + URLGMax + "_" + URLFormArg + "_f_" + URLShiny;
+
+                try
+                {
+                    using HttpResponseMessage response = await client.GetAsync(URLString);
+                    response.EnsureSuccessStatusCode();
+                }
+                catch (HttpRequestException ex1) when (ex1.StatusCode == HttpStatusCode.NotFound)
+                {
+                    if (mon.Gender == 0)
+                        URLGender = "mo";
+                    else
+                        URLGender = "fo";
+
+                    URLString = URLStart + "_" + mon.Species.ToString("0000") + "_" + mon.Form.ToString("000") + "_" + URLGender + "_" + URLGMax + "_" + URLFormArg + "_f_" + URLShiny;
+                }
+            }
+
+            return URLString;
         }
     }
 }

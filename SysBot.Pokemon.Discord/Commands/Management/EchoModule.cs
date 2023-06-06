@@ -50,6 +50,11 @@ namespace SysBot.Pokemon.Discord
                 if (discord.GetChannel(ch.ID) is ISocketMessageChannel c)
                     AddEchoChannel(c, ch.ID);
             }
+            foreach (var ch in cfg.EmbedChannels)
+            {
+                if (discord.GetChannel(ch.ID) is ISocketMessageChannel c)
+                    AddEmbedChannel(c, ch.ID);
+            }
 
             EchoUtil.Echo("Added echo notification to Discord channel(s) on Bot startup.");
         }
@@ -103,10 +108,10 @@ namespace SysBot.Pokemon.Discord
             var entry = new EchoChannel(cid, c.Name, l);
             Channels.Add(cid, entry);
         }
-        yu
+
         private static void AddEmbedChannel(ISocketMessageChannel c, ulong cid)
         {
-            void EchoEmbed(Embed embedObj) => c.SendMessageAsync("hello?", false, embedObj);
+            void EchoEmbed(Embed embedObj) => c.SendMessageAsync(null, false, embedObj);
 
             Action<Embed> l = EchoEmbed;
             EchoUtil.EmbedForwarders.Add(l);
