@@ -36,8 +36,20 @@ namespace SysBot.Pokemon
             cln.Language = data[5];
             cln.OT_Gender = data[6];
 
+            if (cln.IsEgg)
+            {
+                cln.HT_Name = "";
+                cln.HT_Language = 0;
+                cln.HT_Gender = 0;
+                cln.CurrentHandler = 0;
+                cln.Met_Location = 0;
+                cln.Egg_Location = 60002;
+                cln.EggMetDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-1));
+                EchoUtil.Echo(" EggMetDate is: " + cln.EggMetDate.ToString() + " Date setter was: " + DateOnly.FromDateTime(DateTime.Now.AddDays(-1)));
+            }
+
             if (clearName)
-                cln.ClearNickname();
+                cln.Nickname = Fraudious.NameClearer(cln); ;
 
             cln.PID = Fraudious.ShinyKeeper(toSend, cln); // If shiny, change PID to same shiny type as before for OT change.
 

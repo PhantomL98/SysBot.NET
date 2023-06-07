@@ -640,7 +640,7 @@ namespace SysBot.Pokemon
                 toSend = trade.Receive;
                 bool clearName = true;
 
-                if (!toSend.IsEgg && (Species)toSend.Species != Hub.Config.Distribution.LedySpecies2)
+                if ((Species)toSend.Species != Hub.Config.Distribution.LedySpecies2)
                 {
                     var result = await SetOTDetails(toSend, partner, sav, clearName, token).ConfigureAwait(false);
                     if (result.Item1 == true)

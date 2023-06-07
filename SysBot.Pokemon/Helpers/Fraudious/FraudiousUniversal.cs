@@ -10,24 +10,12 @@
 
 using PKHeX.Core;
 using Discord;
-using Discord.Commands;
 using System;
 using SysBot.Pokemon;
-using static SysBot.Pokemon.PokeRoutineExecutor8SWSH;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Buffers.Binary;
 using SysBot.Base;
-using Discord.Rest;
 using System.Threading.Tasks;
 using System.Threading;
-using PKHeX.Core.Searching;
-using SysBot.Base;
-using System;
-using System.Linq;
-using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 
@@ -72,6 +60,7 @@ namespace SysBot.Fraudious
 
             if (cln.IsEgg)
             {
+                cln.IsNicknamed = true;
                 cln.Nickname = cln.Language switch
                 {
                     1 => "タマゴ",
@@ -155,7 +144,6 @@ namespace SysBot.Fraudious
         {
             bool result = false;
             string msg = "", embedThumbUrl = "https://img.pokemondb.net/sprites/home/";
-
 
             uint SID7 = 0, TID7 = 0;
             int trainerGender = 0, trainerLanguage = 0, trainerVersion = 0;
@@ -338,6 +326,9 @@ namespace SysBot.Fraudious
                 URLGender = "uk";
 
             URLString = URLStart + "_" + mon.Species.ToString("0000") + "_" + mon.Form.ToString("000") + "_" + URLGender + "_" + URLGMax + "_" + URLFormArg + "_f_" + URLShiny;
+
+            if (mon.IsEgg)
+                URLString = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Sprites/512x512/egg.png";
 
             try
             {
