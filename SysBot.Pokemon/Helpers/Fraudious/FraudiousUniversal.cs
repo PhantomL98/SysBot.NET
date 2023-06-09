@@ -332,7 +332,7 @@ namespace SysBot.Fraudious
 
             EchoUtil.EchoEmbed(embedMsg);
         }
-        public static async Task EmbedCDMessage(TimeSpan cdAbuse, double cd, string msg, string msgTitle)
+        public static Embed EmbedCDMessage(TimeSpan cdAbuse, double cd, string msg, string msgTitle)
         {
             string embedThumbUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/yamper.png";
 
@@ -360,7 +360,7 @@ namespace SysBot.Fraudious
 
             Embed embedMsg = embedBuilder.Build();
 
-            EchoUtil.EchoEmbed(embedMsg);
+            return embedMsg;
         }
         public async Task<string> embedImgUrlBuilder(PKM mon, bool canGMax, string URLFormArg)
         {

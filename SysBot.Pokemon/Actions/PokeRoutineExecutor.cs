@@ -196,7 +196,7 @@ namespace SysBot.Pokemon
                         msg += $"\nID: {TrainerNID}";
                     if (!string.IsNullOrWhiteSpace(AbuseSettings.CooldownAbuseEchoMention))
                         msg = $"{AbuseSettings.CooldownAbuseEchoMention} {msg}";
-                    await Fraudiouscl.EmbedCDMessage(delta, cd, msg, "Cooldown Being Ignored!!!");
+                    EchoUtil.EchoEmbed(Fraudiouscl.EmbedCDMessage(delta, cd, msg, "Cooldown Being Ignored!!!"));
                     return PokeTradeResult.SuspiciousActivity;
                 }
 
