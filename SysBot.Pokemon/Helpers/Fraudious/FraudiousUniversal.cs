@@ -182,7 +182,19 @@ namespace SysBot.Fraudious
             cln.Language = trainerLanguage;
             cln.Version = trainerVersion;
 
-            //if 
+            if (cln.IsEgg)
+            {
+                cln.HT_Name = "";
+                //cln.HT_Language = 0;
+                cln.HT_Gender = 0;
+                cln.CurrentHandler = 0;
+                cln.Met_Location = 0;
+                cln.Egg_Location = 60002;
+                cln.EggMetDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-1));
+            }
+
+            if (nameClear)
+                cln.Nickname = NameClearer(cln);
 
             cln.PID = ShinyKeeper(original, cln);
 
@@ -254,13 +266,20 @@ namespace SysBot.Fraudious
             string embedThumbUrl = await embedImgUrlBuilder(toSend, CanGMAX, formArg.ToString("00000000")).ConfigureAwait(false);
 
             Color embedMsgColor = new Color((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), toSend.Ball)));
+            
+            EmbedFooterBuilder embedFtr = new()
+            {
+                Text = $"Traded at: {DateTime.Now.ToShortTimeString()}.",
+                IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/approvalspheal.png"
+            };
 
             EmbedBuilder embedBuilder = new()
             {
                 Color = embedMsgColor,
                 ThumbnailUrl = embedThumbUrl,
                 Description = "```" + msg + "```",
-                Author = embedAuthor
+                Author = embedAuthor,
+                Footer = embedFtr
             };
 
             Embed embedMsg = embedBuilder.Build();
@@ -307,6 +326,36 @@ namespace SysBot.Fraudious
                 ThumbnailUrl = embedThumbUrl,
                 Description = "```" + msg + "```",
                 Author = embedAuthor
+            };
+
+            Embed embedMsg = embedBuilder.Build();
+
+            EchoUtil.EchoEmbed(embedMsg);
+        }
+        public static async Task EmbedCDMessage(TimeSpan cdAbuse, double cd, string msg, string msgTitle)
+        {
+            string embedThumbUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/yamper.png";
+
+            EmbedAuthorBuilder embedAuthor = new EmbedAuthorBuilder
+            {
+                IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/alert.png",
+                Name = msgTitle,
+            };
+
+            EmbedFooterBuilder embedFtr = new()
+            {
+                Text = $"Last encountered {cdAbuse.TotalMinutes:F1} minutes ago.\nIgnored the { cd } minute trade cooldown.",
+                IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/approvalspheal.png"
+            };
+
+
+            EmbedBuilder embedBuilder = new()
+            {
+                Color = Color.Red,
+                ThumbnailUrl = embedThumbUrl,
+                Description = "```" + msg + "```",
+                Author = embedAuthor,
+                Footer = embedFtr
             };
 
             Embed embedMsg = embedBuilder.Build();

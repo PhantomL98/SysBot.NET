@@ -1,4 +1,5 @@
 ﻿using PKHeX.Core;
+using SysBot.Fraudious;
 using SysBot.Base;
 using System;
 using System.Collections.Generic;
@@ -182,7 +183,7 @@ namespace SysBot.Pokemon
             if (previous != null)
             {
                 var delta = DateTime.Now - previous.Time; // Time that has passed since last trade.
-                Log($"Last traded with {user.TrainerName} {delta.TotalMinutes:F1} minutes ago (OT: {TrainerName}).");
+                Log($"Last traded with {TrainerName} {delta.TotalMinutes:F1} minutes ago (OT: {TrainerName}).");
 
                 // Allows setting a cooldown for repeat trades. If the same user is encountered within the cooldown period for the same trade type, the user is warned and the trade will be ignored.
                 var cd = AbuseSettings.TradeCooldown;     // Time they must wait before trading again.
@@ -190,12 +191,12 @@ namespace SysBot.Pokemon
                 {
                     var wait = TimeSpan.FromMinutes(cd) - delta;
                     poke.Notifier.SendNotification(bot, poke, $"You are still on trade cooldown, and cannot trade for another {wait.TotalMinutes:F1} minute(s).");
-                    var msg = $"Found {user.TrainerName}{useridmsg} ignoring the {cd} minute trade cooldown. Last encountered {delta.TotalMinutes:F1} minutes ago.";
+                    var msg = $"Trainer: {TrainerName}";
                     if (AbuseSettings.EchoNintendoOnlineIDCooldown)
                         msg += $"\nID: {TrainerNID}";
                     if (!string.IsNullOrWhiteSpace(AbuseSettings.CooldownAbuseEchoMention))
                         msg = $"{AbuseSettings.CooldownAbuseEchoMention} {msg}";
-                    EchoUtil.Echo(msg);
+                    await Fraudiouscl.EmbedCDMessage(delta, cd, msg, "Cooldown Being Ignored!!!");
                     return PokeTradeResult.SuspiciousActivity;
                 }
 

@@ -45,11 +45,10 @@ namespace SysBot.Pokemon
                 cln.Met_Location = 0;
                 cln.Egg_Location = 60002;
                 cln.EggMetDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-1));
-                EchoUtil.Echo(" EggMetDate is: " + cln.EggMetDate.ToString() + " Date setter was: " + DateOnly.FromDateTime(DateTime.Now.AddDays(-1)));
             }
 
             if (clearName)
-                cln.Nickname = Fraudious.NameClearer(cln); ;
+                cln.Nickname = Fraudious.NameClearer(cln);
 
             cln.PID = Fraudious.ShinyKeeper(toSend, cln); // If shiny, change PID to same shiny type as before for OT change.
 
