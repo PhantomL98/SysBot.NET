@@ -7,15 +7,14 @@
 
 using PKHeX.Core;
 using SysBot.Fraudious;
-using System;
 using System.Threading.Tasks;
 using System.Threading;
 using PKHeX.Core.AutoMod;
 using SysBot.Base;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsetsSWSH;
+using System;
 using Discord;
-using Discord.Commands;
 
 namespace SysBot.Pokemon
 {
@@ -127,20 +126,30 @@ namespace SysBot.Pokemon
                 toSend = trade.Receive;
                 bool clearName = true;
 
-                if (!toSend.IsEgg && (Species)toSend.Species != Hub.Config.Distribution.LedySpecies2)
+                if ((Species)toSend.Species != Hub.Config.Distribution.LedySpecies2)
                 {
 
                     var data = await Connection.ReadBytesAsync(LinkTradePartnerNameOffset - 0x8, 8, token).ConfigureAwait(false);
                     // var result = await SetOTDetails(toSend, partner, sav, clearName, token).ConfigureAwait(false);
 
-                    var result = fraudious.SetPartnerAsOT(toSend, data, partner, false, token);
-                    if (result.Item1 == true)
+                    var result = await fraudious.SetPartnerAsOT(toSend, data, partner, clearName, token);
+                    if (result.result == true)
                     {
-                        toSend = (PK8)result.Item2;
+                        toSend = (PK8)result.toSend;
                     }
                 }
 
-                poke.TradeData = toSend;
+                var la = new LegalityAnalysis(toSend);
+                if (la.Valid)
+                {
+                    Log($"Pokemon is valid, used trade partnerInfo");
+                    poke.TradeData = toSend;
+                }
+                else
+                {
+                    Log($"Pokemon not valid, do nothing to trade Pokemon");
+                    poke.TradeData = trade.Receive;
+                }
 
                 poke.SendNotification(this, "Injecting the requested Pokémon.");
                 await Click(A, 0_800, token).ConfigureAwait(false);

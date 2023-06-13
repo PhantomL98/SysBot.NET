@@ -37,11 +37,13 @@ namespace SysBot.Pokemon.Discord
                 // Notify in channel
                 // await context.Channel.SendMessageAsync(msg).ConfigureAwait(false); 
 
-                string embedMsg, embedTitle, embedAuthor;
+                string embedMsg, embedTitle = "", embedAuthor;
                 bool CanGMax = false;
                 uint FormArgument = 0;
 
-                switch (trade.Generation)
+                string HeldItem = Fraudiouscl.FixHeldItemName(((HeldItem)trade.HeldItem).ToString());
+
+                switch (trade.Version)
                 {
                     case (int)GameVersion.X or (int)GameVersion.Y:
                         PK6 mon6 = (PK6)trade.Clone();
@@ -76,24 +78,31 @@ namespace SysBot.Pokemon.Discord
                         break;
                 }
 
-                embedTitle = trade.IsShiny ? "★" : "";
+                if (trade.IsShiny)
+                {
+                    if (trade.ShinyXor == 0 && !(trade.Version == (int)GameVersion.SL || trade.Version == (int)GameVersion.VL))
+                        embedTitle = "■ shiny ";
+                    else
+                        embedTitle = "★ shiny ";
+                }
                 embedTitle += $" {(Species)trade.Species} ";
                 if (trade.Gender == 0)
                     embedTitle += "(M)";
                 else if (trade.Gender == 1)
                     embedTitle += "(F)";
                 if (trade.HeldItem > 0)
-                    embedTitle += $" ➜ {(HeldItem)trade.HeldItem}";
+                    embedTitle += $" ➜ {HeldItem}";
 
                 embedAuthor = $"{trainer}'s ";
                 embedAuthor += trade.IsShiny ? "shiny " : "";
                 embedAuthor += "Pokémon:";
 
-                embedMsg = $"Ability: {(Ability)trade.Ability}";
-                embedMsg += $"\nLevel: {trade.CurrentLevel}";
-                embedMsg += $"\nNature: {(Nature)trade.Nature}";
-                embedMsg += $"\nIVs: {trade.IV_HP}/{trade.IV_ATK}/{trade.IV_DEF}/{trade.IV_SPA}/{trade.IV_SPD}/{trade.IV_SPE}";
-                embedMsg += $"\nMoves:";
+                embedMsg = $"*Ability:* {(Ability)trade.Ability}";
+                embedMsg += $"\n*Level:* {trade.CurrentLevel}";
+                embedMsg += $"\n*Nature:* {(Nature)trade.Nature}";
+                embedMsg += $"\n*IVs:* {trade.IV_HP}/{trade.IV_ATK}/{trade.IV_DEF}/{trade.IV_SPA}/{trade.IV_SPD}/{trade.IV_SPE}";
+                embedMsg += $"\n*EVs:* {trade.EV_HP}/{trade.EV_ATK}/{trade.EV_DEF}/{trade.EV_SPA}/{trade.EV_SPD}/{trade.EV_SPE}";
+                embedMsg += $"\n*Moves:*";
                 if (trade.Move1 != 0)
                     embedMsg += $"\n- {(Move)trade.Move1}";
                 if (trade.Move2 != 0)

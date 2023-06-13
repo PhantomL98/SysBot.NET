@@ -476,7 +476,7 @@ namespace SysBot.Pokemon
         {
             return poke.Type switch
             {
-                PokeTradeType.Random => await HandleRandomLedy(sav, poke, offered, toSend, partnerID, token).ConfigureAwait(false),
+                PokeTradeType.Random => await HandleRandomLedy(true, sav, poke, offered, toSend, partnerID, token).ConfigureAwait(false),
                 PokeTradeType.Clone => await HandleClone(sav, poke, offered, oldEC, token).ConfigureAwait(false),
                 _ => (toSend, PokeTradeResult.Success),
             };
@@ -638,6 +638,9 @@ namespace SysBot.Pokemon
                 }
 
                 toSend = trade.Receive;
+
+                // Code if statement or switch to protect the non clear name mons
+
                 bool clearName = true;
 
                 if ((Species)toSend.Species != Hub.Config.Distribution.LedySpecies2)

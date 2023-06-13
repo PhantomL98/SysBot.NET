@@ -1,7 +1,7 @@
 ﻿namespace SysBot.Pokemon
 {
     /// <summary>
-    /// Pokémon IDs for the normal type
+    /// Color Codes for Balls
     /// </summary>
     public enum embedColor : uint
     {

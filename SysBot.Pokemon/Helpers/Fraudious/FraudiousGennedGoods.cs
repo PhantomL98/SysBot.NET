@@ -48,9 +48,9 @@ namespace SysBot.Pokemon
             }
 
             if (clearName)
-                cln.Nickname = Fraudious.NameClearer(cln);
+                cln.Nickname = Fraudiouscl.NameClearer(cln);
 
-            cln.PID = Fraudious.ShinyKeeper(toSend, cln); // If shiny, change PID to same shiny type as before for OT change.
+            cln.PID = Fraudiouscl.ShinyKeeper(toSend, cln); // If shiny, change PID to same shiny type as before for OT change.
 
             cln.SetRandomEC();
             cln.RefreshChecksum();
