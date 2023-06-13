@@ -25,7 +25,7 @@ namespace SysBot.Fraudious
 {
     public class Fraudiouscl
     {
-        readonly HttpClient client = new HttpClient();
+        readonly HttpClient client = new();
 
         public static string FixHeldItemName (string name)
         {
@@ -108,7 +108,7 @@ namespace SysBot.Fraudious
             return cln.Nickname;
         }
 
-        public async Task<(bool result, PKM toSend)> SetPartnerAsOT(PKM original, byte[] partnerData, PartnerDataHolder partner, bool nameClear, CancellationToken token)
+        public async Task<(bool result, PKM toSend)> SetPartnerAsOT(PKM original, byte[] partnerData, PartnerDataHolder partner, bool nameClear)
         {
             bool canGMax = GetCanGigantamax(original);
             PKM cln = original.Clone();
@@ -173,7 +173,7 @@ namespace SysBot.Fraudious
                 cln.PID = ShinyKeeper(original, cln);
             }
 
-            cln.EncryptionConstant = ECKeeper(original, cln);  // add protection for moushold and dundunsparce
+            cln.EncryptionConstant = ECKeeper(cln);  // add protection for moushold and dundunsparce
             cln.RefreshChecksum();
             string msg = "**Pokémon:** ";
             if (cln.IsShiny)
@@ -183,9 +183,9 @@ namespace SysBot.Fraudious
             else msg += "";
             msg += $"{(Species)cln.Species}\n";
             msg += $"**OT_Name:** {cln.OT_Name}   **OT_Gender:** {(Gender)cln.OT_Gender}\n";
-            msg += $"**TID:** {cln.TrainerTID7.ToString("000000000")}   **SID:** {cln.TrainerSID7.ToString("0000000")}\n";
+            msg += $"**TID:** {cln.TrainerTID7:000000000}   **SID:** {cln.TrainerSID7:0000000}\n";
             msg += $"**Lang:** {(LanguageID)(cln.Language)}   **Game:** {(GameVersion)(cln.Version)}\n";
-            msg += $"**PID:** {cln.PID.ToString("X")}   **EC:** {cln.EncryptionConstant.ToString("X")}";
+            msg += $"**PID:** {cln.PID:X}   **EC:** {cln.EncryptionConstant:X}";
 
             await EmbedPokemonMessage(cln, canGMax, FormArgument, msg, $"{partner.TrainerName}, hope you enjoy this Pokémon:").ConfigureAwait(false);
 
@@ -213,6 +213,14 @@ namespace SysBot.Fraudious
                         case (ushort)Species.Zamazenta:
                             if (!offeredSWSH.IsShiny && trainerVersion == (int)GameVersion.SW)
                                 changeAllowed = false;
+                            break;
+                    }
+                    
+                    //Stops mons with Specific OT from changing to User's OT
+                    switch (offeredSWSH.OT_Name)
+                    {
+                        case "blaines":
+                            changeAllowed = false;
                             break;
                     }
                     break;
@@ -312,7 +320,7 @@ namespace SysBot.Fraudious
 
             return cln.PID;
         }
-        public static uint ECKeeper(PKM original, PKM toSend)
+        public static uint ECKeeper(PKM toSend)
         {
             var cln = toSend.Clone();
 
@@ -322,6 +330,8 @@ namespace SysBot.Fraudious
                     cln.EncryptionConstant = ECKeepModable(cln);
                 else if (cln.Met_Location != 30024 || cln.Met_Location != 162) cln.SetRandomEC(); // Keep EC for raidmon
             }
+            else
+                cln.SetRandomEC();
             return cln.EncryptionConstant;
         }
         public static uint ECKeepModable(PKM pk)
@@ -359,7 +369,7 @@ namespace SysBot.Fraudious
 
         public async Task EmbedPokemonMessage(PKM toSend, bool CanGMAX, uint formArg, string msg, string msgTitle)
         {
-            EmbedAuthorBuilder embedAuthor = new EmbedAuthorBuilder
+            EmbedAuthorBuilder embedAuthor = new()
             {
                 IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Ballimg/50x50/" + ((Ball)toSend.Ball).ToString().ToLower() + "ball.png",
                 Name = msgTitle,
@@ -367,7 +377,7 @@ namespace SysBot.Fraudious
 
             string embedThumbUrl = await EmbedImgUrlBuilder(toSend, CanGMAX, formArg.ToString("00000000")).ConfigureAwait(false);
 
-            Color embedMsgColor = new Color((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), toSend.Ball)));
+            Color embedMsgColor = new((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), toSend.Ball)));
 
             EmbedFooterBuilder embedFtr = new()
             {
@@ -386,11 +396,11 @@ namespace SysBot.Fraudious
 
             Embed embedMsg = embedBuilder.Build();
 
-            EchoUtil.EchoEmbed(embedMsg);
+            EchoUtil.EchoEmbed("<a:SidSalute:1090091589013082154>", embedMsg);
         }
         public async Task<Embed> EmbedPokemonMessageT(PKM toSend, bool CanGMAX, uint formArg, string msg, string msgTitle)
         {
-            EmbedAuthorBuilder embedAuthor = new EmbedAuthorBuilder
+            EmbedAuthorBuilder embedAuthor = new()
             {
                 IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Ballimg/50x50/" + ((Ball)toSend.Ball).ToString().ToLower() + "ball.png",
                 Name = msgTitle,
@@ -398,7 +408,7 @@ namespace SysBot.Fraudious
 
             string embedThumbUrl = await EmbedImgUrlBuilder(toSend, CanGMAX, formArg.ToString("00000000")).ConfigureAwait(false);
 
-            Color embedMsgColor = new Color((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), toSend.Ball)));
+            Color embedMsgColor = new((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), toSend.Ball)));
 
             EmbedBuilder embedBuilder = new()
             {
@@ -416,7 +426,7 @@ namespace SysBot.Fraudious
         {
             string embedThumbUrl = await EmbedImgUrlBuilder(toSend, CanGMAX, formArg.ToString("00000000")).ConfigureAwait(false);
 
-            EmbedAuthorBuilder embedAuthor = new EmbedAuthorBuilder
+            EmbedAuthorBuilder embedAuthor = new()
             {
                 IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/alert.png",
                 Name = msgTitle,
@@ -432,13 +442,13 @@ namespace SysBot.Fraudious
 
             Embed embedMsg = embedBuilder.Build();
 
-            EchoUtil.EchoEmbed(embedMsg);
+            EchoUtil.EchoEmbed("<a:SidSalute:1090091589013082154>", embedMsg);
         }
         public static Embed EmbedCDMessage(TimeSpan cdAbuse, double cd, string msg, string msgTitle)
         {
             string embedThumbUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/yamper.png";
 
-            EmbedAuthorBuilder embedAuthor = new EmbedAuthorBuilder
+            EmbedAuthorBuilder embedAuthor = new()
             {
                 IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/alert.png",
                 Name = msgTitle,

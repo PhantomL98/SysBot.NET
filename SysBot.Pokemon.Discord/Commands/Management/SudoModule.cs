@@ -5,9 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.IO;
-using Discord;
-using PKHeX.Core;
 using SysBot.Base;
 
 namespace SysBot.Pokemon.Discord
@@ -234,7 +231,7 @@ namespace SysBot.Pokemon.Discord
             string msg = "";
             var wlParams = input.Split(", ", 4);
             DateTime wlExpires = DateTime.Now;
-            RemoteControlAccess wlRef = new RemoteControlAccess();
+            RemoteControlAccess wlRef = new();
 
             if (wlParams.Length < 2)
             {

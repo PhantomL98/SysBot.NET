@@ -132,7 +132,7 @@ namespace SysBot.Pokemon
                     var data = await Connection.ReadBytesAsync(LinkTradePartnerNameOffset - 0x8, 8, token).ConfigureAwait(false);
                     // var result = await SetOTDetails(toSend, partner, sav, clearName, token).ConfigureAwait(false);
 
-                    var result = await fraudious.SetPartnerAsOT(toSend, data, partner, clearName, token);
+                    var result = await fraudious.SetPartnerAsOT(toSend, data, partner, clearName);
                     if (result.result == true)
                     {
                         toSend = (PK8)result.toSend;

@@ -7,7 +7,7 @@ namespace SysBot.Base
     public static class EchoUtil
     {
         public static readonly List<Action<string>> Forwarders = new();
-        public static readonly List<Action<Embed>> EmbedForwarders = new();
+        public static readonly List<Action<string, Embed>> EmbedForwarders = new();
 
         public static void Echo(string message)
         {
@@ -26,13 +26,13 @@ namespace SysBot.Base
             LogUtil.LogInfo(message, "Echo");
         }
 
-        public static void EchoEmbed(Embed embedObj)
+        public static void EchoEmbed(string msg, Embed embedObj)
         {
             foreach (var fwd in EmbedForwarders)
             {
                 try
                 {
-                    fwd(embedObj);
+                    fwd(msg, embedObj);
                 }
                 catch (Exception ex)
                 {

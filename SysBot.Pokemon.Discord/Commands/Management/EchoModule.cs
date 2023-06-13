@@ -29,9 +29,9 @@ namespace SysBot.Pokemon.Discord
         {
             public readonly ulong ChannelID;
             public readonly string ChannelName;
-            public readonly Action<Embed> Action;
+            public readonly Action<string, Embed> Action;
 
-            public EmbedChannel(ulong channelId, string channelName, Action<Embed> action)
+            public EmbedChannel(ulong channelId, string channelName, Action<string, Embed> action)
             {
                 ChannelID = channelId;
                 ChannelName = channelName;
@@ -111,9 +111,9 @@ namespace SysBot.Pokemon.Discord
 
         private static void AddEmbedChannel(ISocketMessageChannel c, ulong cid)
         {
-            void EchoEmbed(Embed embedObj) => c.SendMessageAsync(null, false, embedObj);
+            void EchoEmbed(string msg, Embed embedObj) => c.SendMessageAsync(msg, false, embedObj);
 
-            Action<Embed> l = EchoEmbed;
+            Action<string, Embed> l = EchoEmbed;
             EchoUtil.EmbedForwarders.Add(l);
             var entry = new EmbedChannel(cid, c.Name, l);
             EmbedChannels.Add(cid, entry);
