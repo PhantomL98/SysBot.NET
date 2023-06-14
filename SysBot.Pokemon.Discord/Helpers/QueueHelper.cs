@@ -14,7 +14,7 @@ namespace SysBot.Pokemon.Discord
 {
     public static class QueueHelper<T> where T : PKM, new()
     {
-        static readonly HttpClient client = new HttpClient();
+        static readonly HttpClient client = new();
 
         private const uint MaxTradeCode = 9999_9999;
 
@@ -37,9 +37,13 @@ namespace SysBot.Pokemon.Discord
                 // Notify in channel
                 // await context.Channel.SendMessageAsync(msg).ConfigureAwait(false); 
 
-                string embedMsg, embedTitle = "", embedAuthor;
+                string embedMsg, embedTitle = "", embedAuthor, embedThumbUrl = "";
                 bool CanGMax = false;
                 uint FormArgument = 0;
+
+                Color embedMsgColor = new();
+                EmbedAuthorBuilder embedAuthorBuild = new();
+                EmbedFooterBuilder embedFtr = new();
 
                 string HeldItem = Fraudiouscl.FixHeldItemName(((HeldItem)trade.HeldItem).ToString());
 
@@ -77,106 +81,145 @@ namespace SysBot.Pokemon.Discord
                         FormArgument = mon9.FormArgument;
                         break;
                 }
-
-                if (trade.IsShiny)
+                if (routine == PokeRoutineType.Clone || routine == PokeRoutineType.Dump)
                 {
-                    if (trade.ShinyXor == 0 && !(trade.Version == (int)GameVersion.SL || trade.Version == (int)GameVersion.VL))
-                        embedTitle = "■ shiny ";
-                    else
-                        embedTitle = "★ shiny ";
+                    
+                    embedTitle = $"__Prepare the trade code once the bot messages you__\n";
+                    embedAuthor = $"{trainer}'s ";
+                    embedMsg = $"";
+                    if (routine == PokeRoutineType.Clone)
+                    {
+                        embedMsgColor = 0xF9F815;
+                        embedAuthor += "Clone Request";
+                        embedMsg += $"**STEPS:**\n";
+                        embedMsg += $"**1.** Show a Pokémon to be cloned\n";
+                        embedMsg += $"**2.** Hit B once to back out of your offer\n";
+                        embedMsg += $"**3.** Offer a trash Pokémon to receive your clone\n";
+                        embedMsg += $"**4.** Remember to proceed past the warning message\n\n";
+                        embedMsg += $"Your cooldown of **{SysCordSettings.HubConfig.TradeAbuse.TradeCooldown}** mins will start once the trade completes\n\n";
+                        embedMsg += $"Thank you come again!";
+                    }
+                    else if (routine == PokeRoutineType.Dump)
+                    {
+                        embedMsgColor = 0x6015F9;
+                        embedAuthor += "Dump Request";
+                        embedMsg += $"Show your Pokémon to be dumped\n";
+                        embedMsg += $"You have **{SysCordSettings.HubConfig.Trade.MaxDumpTradeTime}** seconds to show your Pokémon\n";
+                        embedMsg += $"You can show up to **{SysCordSettings.HubConfig.Trade.MaxDumpsPerTrade}** Pokémon\n\n";
+                        embedMsg += $"Your cooldown of **{SysCordSettings.HubConfig.TradeAbuse.TradeCooldown}** mins will start once the trade completes\n\n";
+                        embedMsg += $"Thank you come again!";
+                    }
+
+                    embedAuthorBuild.IconUrl = "https://archives.bulbagarden.net/media/upload/e/e1/PCP363.png";
+                    embedAuthorBuild.Name = embedAuthor;
+                    
+                    embedFtr.Text = $"Current Position: " + SysCord<T>.Runner.Hub.Queues.Info.Count.ToString() + ".\nEstimated Wait: " + Math.Round(((SysCord<T>.Runner.Hub.Queues.Info.Count) * 1.65), 1).ToString() + " minutes.";
+                    embedFtr.IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/approvalspheal.png";
+                    
+                    embedThumbUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/approvalspheal.png";
+                    
                 }
-                embedTitle += $" {(Species)trade.Species} ";
-                if (trade.Gender == 0)
-                    embedTitle += "(M)";
-                else if (trade.Gender == 1)
-                    embedTitle += "(F)";
-                if (trade.HeldItem > 0)
-                    embedTitle += $" ➜ {HeldItem}";
-
-                embedAuthor = $"{trainer}'s ";
-                embedAuthor += trade.IsShiny ? "shiny " : "";
-                embedAuthor += "Pokémon:";
-
-                embedMsg = $"*Ability:* {(Ability)trade.Ability}";
-                embedMsg += $"\n*Level:* {trade.CurrentLevel}";
-                embedMsg += $"\n*Nature:* {(Nature)trade.Nature}";
-                embedMsg += $"\n*IVs:* {trade.IV_HP}/{trade.IV_ATK}/{trade.IV_DEF}/{trade.IV_SPA}/{trade.IV_SPD}/{trade.IV_SPE}";
-                embedMsg += $"\n*EVs:* {trade.EV_HP}/{trade.EV_ATK}/{trade.EV_DEF}/{trade.EV_SPA}/{trade.EV_SPD}/{trade.EV_SPE}";
-                embedMsg += $"\n*Moves:*";
-                if (trade.Move1 != 0)
-                    embedMsg += $"\n- {(Move)trade.Move1}";
-                if (trade.Move2 != 0)
-                    embedMsg += $"\n- {(Move)trade.Move2}";
-                if (trade.Move3 != 0)
-                    embedMsg += $"\n- {(Move)trade.Move3}";
-                if (trade.Move4 != 0)
-                    embedMsg += $"\n- {(Move)trade.Move4}";
-                embedMsg += $"\n\n{trader.Mention} - Added to the LinkTrade queue.";
-
-                EmbedAuthorBuilder embedAuthorBuild = new()
-                {
-                    IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Ballimg/50x50/" + ((Ball)trade.Ball).ToString().ToLower() + "ball.png",
-                    Name = embedAuthor,
-                };
-
-                Color embedMsgColor = new Color((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), trade.Ball)));
-
-                EmbedFooterBuilder embedFtr = new()
-                {
-                    Text = $"Current Position: " + SysCord<T>.Runner.Hub.Queues.Info.Count.ToString() + ".\nEstimated Wait: " + Math.Round(((SysCord<T>.Runner.Hub.Queues.Info.Count) * 1.65), 1).ToString() + " minutes.",
-                    IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/approvalspheal.png"
-                };
-
-                string URLStart = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Sprites/200x200/poke_capture";
-                string URLString, URLGender;
-                string URLGMax = CanGMax ? "g" : "n";
-                string URLShiny = trade.IsShiny ? "r.png" : "n.png";
-
-                if (trade.Gender < 2)
-                    URLGender = "mf";
                 else
-                    URLGender = "uk";
-
-                URLString = URLStart + "_" + trade.Species.ToString("0000") + "_" + trade.Form.ToString("000") + "_" + URLGender + "_" + URLGMax + "_" + FormArgument.ToString("00000000") + "_f_" + URLShiny;
-
-                try
                 {
-                    using HttpResponseMessage response = await client.GetAsync(URLString);
-                    response.EnsureSuccessStatusCode();
-                }
-                catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
-                {
+                    if (trade.IsShiny)
+                    {
+                        if (trade.ShinyXor == 0 && !(trade.Version == (int)GameVersion.SL || trade.Version == (int)GameVersion.VL))
+                            embedTitle = "■ shiny ";
+                        else
+                            embedTitle = "★ shiny ";
+                    }
+
+                    embedTitle += $" {(Species)trade.Species} ";
                     if (trade.Gender == 0)
-                        URLGender = "md";
-                    else
-                        URLGender = "fd";
+                        embedTitle += "(M)";
+                    else if (trade.Gender == 1)
+                        embedTitle += "(F)";
+                    if (trade.HeldItem > 0)
+                        embedTitle += $" ➜ {HeldItem}";
 
-                    URLString = URLStart + "_" + trade.Species.ToString("0000") + "_" + trade.Form.ToString("000") + "_" + URLGender + "_" + URLGMax + "_" + FormArgument.ToString("00000000") + "_f_" + URLShiny;
+                    embedAuthor = $"{trainer}'s ";
+                    embedAuthor += trade.IsShiny ? "**shiny** " : "";
+                    embedAuthor += "Pokémon:";
+
+                    embedMsg = $"**Ability:** {(Ability)trade.Ability}";
+                    embedMsg += $"\n**Level:** {trade.CurrentLevel}";
+                    embedMsg += $"\n**Nature:** {(Nature)trade.Nature}";
+                    embedMsg += $"\n**IVs:** {trade.IV_HP}/{trade.IV_ATK}/{trade.IV_DEF}/{trade.IV_SPA}/{trade.IV_SPD}/{trade.IV_SPE}";
+                    embedMsg += $"\n**EVs:** {trade.EV_HP}/{trade.EV_ATK}/{trade.EV_DEF}/{trade.EV_SPA}/{trade.EV_SPD}/{trade.EV_SPE}";
+
+                    embedMsg += $"\n**Moves:**";
+                    if (trade.Move1 != 0)
+                        embedMsg += $"\n- {(Move)trade.Move1}";
+                    if (trade.Move2 != 0)
+                        embedMsg += $"\n- {(Move)trade.Move2}";
+                    if (trade.Move3 != 0)
+                        embedMsg += $"\n- {(Move)trade.Move3}";
+                    if (trade.Move4 != 0)
+                        embedMsg += $"\n- {(Move)trade.Move4}";
+                    
+                    embedMsg += $"\n\n{trader.Mention} - Added to the LinkTrade queue.\n\n";
+                    embedMsg += $"Your cooldown of **{SysCordSettings.HubConfig.TradeAbuse.TradeCooldown}** mins will start once the trade completes\n\n";
+                    embedMsg += $"Thank you come again!";
+
+                    embedAuthorBuild.IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Ballimg/50x50/" + ((Ball)trade.Ball).ToString().ToLower() + "ball.png";
+                    embedAuthorBuild.Name = embedAuthor;
+                    
+                    embedMsgColor = new Color((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), trade.Ball)));
+
+                    embedFtr.Text = $"Current Position: " + SysCord<T>.Runner.Hub.Queues.Info.Count.ToString() + ".\nEstimated Wait: " + Math.Round(((SysCord<T>.Runner.Hub.Queues.Info.Count) * 1.65), 1).ToString() + " minutes.";
+                    embedFtr.IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/approvalspheal.png";
+
+                    string URLStart = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Sprites/200x200/poke_capture";
+                    string URLGender;
+                    string URLGMax = CanGMax ? "g" : "n";
+                    string URLShiny = trade.IsShiny ? "r.png" : "n.png";
+
+                    if (trade.Gender < 2)
+                        URLGender = "mf";
+                    else
+                        URLGender = "uk";
+
+                    embedThumbUrl = URLStart + "_" + trade.Species.ToString("0000") + "_" + trade.Form.ToString("000") + "_" + URLGender + "_" + URLGMax + "_" + FormArgument.ToString("00000000") + "_f_" + URLShiny;
 
                     try
                     {
-                        using HttpResponseMessage response = await client.GetAsync(URLString);
+                        using HttpResponseMessage response = await client.GetAsync(embedThumbUrl);
                         response.EnsureSuccessStatusCode();
                     }
-                    catch (HttpRequestException ex1) when (ex1.StatusCode == HttpStatusCode.NotFound)
+                    catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
                     {
                         if (trade.Gender == 0)
-                            URLGender = "mo";
+                            URLGender = "md";
                         else
-                            URLGender = "fo";
+                            URLGender = "fd";
 
-                        URLString = URLStart + "_" + trade.Species.ToString("0000") + "_" + trade.Form.ToString("000") + "_" + URLGender + "_" + URLGMax + "_" + FormArgument.ToString("00000000") + "_f_" + URLShiny;
+                        embedThumbUrl = URLStart + "_" + trade.Species.ToString("0000") + "_" + trade.Form.ToString("000") + "_" + URLGender + "_" + URLGMax + "_" + FormArgument.ToString("00000000") + "_f_" + URLShiny;
+
+                        try
+                        {
+                            using HttpResponseMessage response = await client.GetAsync(embedThumbUrl);
+                            response.EnsureSuccessStatusCode();
+                        }
+                        catch (HttpRequestException ex1) when (ex1.StatusCode == HttpStatusCode.NotFound)
+                        {
+                            if (trade.Gender == 0)
+                                URLGender = "mo";
+                            else
+                                URLGender = "fo";
+
+                            embedThumbUrl = URLStart + "_" + trade.Species.ToString("0000") + "_" + trade.Form.ToString("000") + "_" + URLGender + "_" + URLGMax + "_" + FormArgument.ToString("00000000") + "_f_" + URLShiny;
+                        }
                     }
                 }
 
-                EmbedBuilder builder = new EmbedBuilder
+                EmbedBuilder builder = new()
                 {
                     //Optional color
                     Color = embedMsgColor,
                     Author = embedAuthorBuild,
                     Title = embedTitle,
                     Description = embedMsg,
-                    ThumbnailUrl = URLString,
+                    ThumbnailUrl = embedThumbUrl,
                     Footer = embedFtr
                 };
 

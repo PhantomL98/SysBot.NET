@@ -396,31 +396,7 @@ namespace SysBot.Fraudious
 
             Embed embedMsg = embedBuilder.Build();
 
-            EchoUtil.EchoEmbed("<a:SidSalute:1090091589013082154>", embedMsg);
-        }
-        public async Task<Embed> EmbedPokemonMessageT(PKM toSend, bool CanGMAX, uint formArg, string msg, string msgTitle)
-        {
-            EmbedAuthorBuilder embedAuthor = new()
-            {
-                IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Ballimg/50x50/" + ((Ball)toSend.Ball).ToString().ToLower() + "ball.png",
-                Name = msgTitle,
-            };
-
-            string embedThumbUrl = await EmbedImgUrlBuilder(toSend, CanGMAX, formArg.ToString("00000000")).ConfigureAwait(false);
-
-            Color embedMsgColor = new((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), toSend.Ball)));
-
-            EmbedBuilder embedBuilder = new()
-            {
-                Color = embedMsgColor,
-                ThumbnailUrl = embedThumbUrl,
-                Description = msg,
-                Author = embedAuthor
-            };
-
-            Embed embedMsg = embedBuilder.Build();
-
-            return embedMsg;
+            EchoUtil.EchoEmbed("", embedMsg);
         }
         public async Task EmbedAlertMessage(PKM toSend, bool CanGMAX, uint formArg, string msg, string msgTitle)
         {
