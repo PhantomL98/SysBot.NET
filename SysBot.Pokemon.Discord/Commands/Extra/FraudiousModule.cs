@@ -7,6 +7,7 @@ using System.IO;
 using System.Threading;
 using SysBot.Pokemon;
 using SysBot.Base;
+using SysBot.Fraudious;
 
 namespace SysBot.Pokemon.Discord
 {
@@ -27,10 +28,18 @@ namespace SysBot.Pokemon.Discord
                 string trainerName = cooldown.ToString().Substring(21, cooldown.ToString().IndexOf('=', cooldown.ToString().IndexOf('=') + 1) - 31);
                 var delta = DateTime.Now - cooldown.Time;
                 double ddelta = delta.TotalMinutes;
+                var cd = SysCordSettings.HubConfig.TradeAbuse.TradeCooldown;
+
                 if (ddelta.CompareTo((double)SysCordSettings.HubConfig.TradeAbuse.TradeCooldown) < 1)
-                    await ReplyAsync($"{trainerName} your cooldown is currently on {delta.TotalMinutes:F1} out of {SysCordSettings.HubConfig.TradeAbuse.TradeCooldown} minutes.").ConfigureAwait(false);
-                else
-                    await ReplyAsync($"{trainerName} your cooldown of {SysCordSettings.HubConfig.TradeAbuse.TradeCooldown} minutes has expired. Thank you come again!").ConfigureAwait(false);
+                {
+                    EmbedBuilder? embed = Fraudiouscl.EmbedCDMessage2(cd, $"{trainerName} your cooldown is currently on {delta.TotalMinutes:F1} out of {cd} minutes.", "Cooldown Notification");
+                    await ReplyAsync("", embed: embed.Build()).ConfigureAwait(false);
+                }
+            else
+                {
+                    EmbedBuilder? embed = Fraudiouscl.EmbedCDMessage2(cd, $"{trainerName}, your cooldown of {cd} minutes has expired.Thank you come again!", "Cooldown Notification");
+                    await ReplyAsync("", embed: embed.Build()).ConfigureAwait(false);
+                }
             }
             else
                 await ReplyAsync($"User has not traded with the bot recently.").ConfigureAwait(false);

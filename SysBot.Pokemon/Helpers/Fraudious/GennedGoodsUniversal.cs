@@ -450,6 +450,34 @@ namespace SysBot.Fraudious
 
             return embedMsg;
         }
+        public static EmbedBuilder EmbedCDMessage2(double cd, string msg, string msgTitle)
+        {
+            string embedThumbUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/yamper.png";
+
+            EmbedAuthorBuilder embedAuthor = new()
+            {
+                IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/alert.png",
+                Name = msgTitle,
+            };
+
+            EmbedFooterBuilder embedFtr = new()
+            {
+                Text = $"Brought to you by Fraudious Co.",
+                IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/approvalspheal.png"
+            };
+
+
+            EmbedBuilder embedBuilder = new()
+            {
+                Color = Color.Red,
+                ThumbnailUrl = embedThumbUrl,
+                Description = msg,
+                Author = embedAuthor,
+                Footer = embedFtr
+            };
+
+            return embedBuilder;
+        }
         public async Task<string> EmbedImgUrlBuilder(PKM mon, bool canGMax, string URLFormArg)
         {
             string URLStart = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Sprites/200x200/poke_capture";
