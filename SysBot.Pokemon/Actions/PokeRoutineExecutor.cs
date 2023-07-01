@@ -189,6 +189,7 @@ namespace SysBot.Pokemon
                 var cd = AbuseSettings.TradeCooldown;     // Time they must wait before trading again.
                 if (cd != 0 && TimeSpan.FromMinutes(cd) > delta && !wlAllow)
                 {
+                    list.TryRegister(TrainerNID, TrainerName);
                     var wait = TimeSpan.FromMinutes(cd) - delta;
                     poke.Notifier.SendNotification(bot, poke, $"You are still on trade cooldown, and cannot trade for another {wait.TotalMinutes:F1} minute(s).");
                     var msg = $"Trainer: {TrainerName}";

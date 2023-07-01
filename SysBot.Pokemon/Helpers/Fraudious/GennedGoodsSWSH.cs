@@ -13,16 +13,15 @@ using PKHeX.Core.AutoMod;
 using SysBot.Base;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsetsSWSH;
-using System;
-using Discord;
 
 namespace SysBot.Pokemon
 {
     public partial class PokeTradeBotSWSH : PokeRoutineExecutor8SWSH, ICountBot
     {
-        private async Task<(PK8 toSend, PokeTradeResult check)> HandleRandomLedy(bool Fraudious, SAV8SWSH sav, PokeTradeDetail<PK8> poke, PK8 offered, PK8 toSend, PartnerDataHolder partner, CancellationToken token)
+        private async Task<(PK8 toSend, PokeTradeResult check)> HandleRandomLedy(int bot, SaveFile sav, PokeTradeDetail<PK8> poke, PK8 offered, PK8 toSend, PartnerDataHolder partner, CancellationToken token)
         {
             Fraudiouscl fraudious = new();
+
             // Allow the trade partner to do a Ledy swap.
             var config = Hub.Config.Distribution;
 

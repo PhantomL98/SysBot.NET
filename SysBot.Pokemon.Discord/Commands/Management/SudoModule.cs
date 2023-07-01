@@ -188,7 +188,8 @@ namespace SysBot.Pokemon.Discord
                 await ReplyAsync("No previous users found.").ConfigureAwait(false);
         }
 
-        [Command("trademon")]
+        [Command("changeledyspecies")]
+        [Alias("changeledy","changemon")]
         [Summary("Changes LedySpecies of Pokémon for idle distribution.")]
         [RequireSudo]
         public async Task ChangeTradeMon([Remainder] string input)
@@ -212,7 +213,8 @@ namespace SysBot.Pokemon.Discord
 
         }
 
-        [Command("checkmon")]
+        [Command("checkledyspecies")]
+        [Alias("checkledy", "checkmon")]
         [Summary("Checks what the current LedySpecies is")]
         [RequireSudo]
         public async Task EchoLedySpecies()
@@ -221,7 +223,8 @@ namespace SysBot.Pokemon.Discord
             await ReplyAsync(Format.Code($"LedySpecies is currently: {SysCordSettings.HubConfig.Distribution.LedySpecies}")).ConfigureAwait(false);
         }
 
-        [Command("addwl")]
+        [Command("addwhitelist")]
+        [Alias("addwl", "awl")]
         [Summary("Adds NID to whitelist for cooldown skipping. Format: addwl [NID] [IGN] [Duration in hours](optional)")]
         [RequireSudo]
         // Adds a <NID> to cooldown whitelist.  Syntax: <prefix>addwl <NID>, <OT_Name>, <Reason for whitelisting>, <day/hour>, <duration>

@@ -476,7 +476,7 @@ namespace SysBot.Pokemon
         {
             return poke.Type switch
             {
-                PokeTradeType.Random => await HandleRandomLedy(true, sav, poke, offered, toSend, partnerID, token).ConfigureAwait(false),
+                PokeTradeType.Random => await HandleRandomLedy(1, sav, poke, offered, toSend, partnerID, token).ConfigureAwait(false),
                 PokeTradeType.Clone => await HandleClone(sav, poke, offered, oldEC, token).ConfigureAwait(false),
                 _ => (toSend, PokeTradeResult.Success),
             };

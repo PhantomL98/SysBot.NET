@@ -20,6 +20,7 @@ using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
+using Discord.WebSocket;
 
 namespace SysBot.Fraudious
 {
@@ -158,6 +159,7 @@ namespace SysBot.Fraudious
                 {
                     cln.HT_Name = "";
                     cln.HT_Gender = 0;
+                    cln.ClearMemories();
                     cln.CurrentHandler = 0;
                     if (trainerVersion == (int)GameVersion.BD || trainerVersion == (int)GameVersion.SP)
                         cln.Met_Location = 65535;
