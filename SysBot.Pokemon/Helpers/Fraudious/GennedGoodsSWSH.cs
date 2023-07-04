@@ -123,7 +123,7 @@ namespace SysBot.Pokemon
                 }
 
                 toSend = trade.Receive;
-                bool clearName = true;
+                bool clearName = false;
 
                 if ((Species)toSend.Species != Hub.Config.Distribution.LedySpecies2)
                 {
@@ -146,13 +146,14 @@ namespace SysBot.Pokemon
                 }
                 else
                 {
+                    Log(la.Info.ToString());
                     Log($"Pokemon not valid, do nothing to trade Pokemon");
                     poke.TradeData = trade.Receive;
                 }
 
                 poke.SendNotification(this, "Injecting the requested Pokémon.");
                 await Click(A, 0_800, token).ConfigureAwait(false);
-                await SetBoxPokemon(toSend, 0, 0, token, sav).ConfigureAwait(false);
+                await SetBoxPokemon(poke.TradeData, 0, 0, token, sav).ConfigureAwait(false);
                 await Task.Delay(2_500, token).ConfigureAwait(false);
             }
             else if (config.LedyQuitIfNoMatch)

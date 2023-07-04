@@ -45,7 +45,7 @@ namespace SysBot.Pokemon.Discord
         }
 
         [Command("reservetrade")]
-        [Alias("rsvp")]
+        [Alias("rsv")]
         [Summary("Allows users to reserve the next distribution trade in the bot")]
         [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
         public async Task RSVP()
@@ -56,7 +56,7 @@ namespace SysBot.Pokemon.Discord
         }
 
         [Command("reservetrade")]
-        [Alias("rsvp")]
+        [Alias("rsv")]
         [Summary("Allows users to reserve the next distribution trade in the bot")]
         [RequireQueueRole(nameof(DiscordManager.RolesTrade))]
         public async Task RSVP([Summary("Trade Code")] int code)

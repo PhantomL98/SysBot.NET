@@ -185,7 +185,7 @@ namespace SysBot.Fraudious
             else msg += "";
             msg += $"{(Species)cln.Species}\n";
             msg += $"**OT_Name:** {cln.OT_Name}   **OT_Gender:** {(Gender)cln.OT_Gender}\n";
-            msg += $"**TID:** {cln.TrainerTID7:000000000}   **SID:** {cln.TrainerSID7:0000000}\n";
+            msg += $"**TID:** {cln.TrainerTID7:D6}   **SID:** {cln.TrainerSID7:D4}\n";
             msg += $"**Lang:** {(LanguageID)(cln.Language)}   **Game:** {(GameVersion)(cln.Version)}\n";
             msg += $"**PID:** {cln.PID:X}   **EC:** {cln.EncryptionConstant:X}";
 
