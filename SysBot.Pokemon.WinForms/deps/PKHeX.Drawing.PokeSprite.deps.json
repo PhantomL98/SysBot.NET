@@ -7,10 +7,10 @@
   "targets": {
     ".NETCoreApp,Version=v7.0": {},
     ".NETCoreApp,Version=v7.0/win-x64": {
-      "PKHeX.Drawing.PokeSprite/23.05.11": {
+      "PKHeX.Drawing.PokeSprite/23.07.09": {
         "dependencies": {
-          "PKHeX.Core": "23.5.11",
-          "PKHeX.Drawing": "23.5.11",
+          "PKHeX.Core": "23.7.9",
+          "PKHeX.Drawing": "23.7.9",
           "System.Resources.Extensions": "7.0.0"
         },
         "runtime": {
@@ -44,12 +44,12 @@
           }
         }
       },
-      "PKHeX.Core/23.5.11": {
+      "PKHeX.Core/23.7.9": {
         "runtime": {
           "PKHeX.Core.dll": {}
         }
       },
-      "PKHeX.Drawing/23.5.11": {
+      "PKHeX.Drawing/23.7.9": {
         "dependencies": {
           "System.Drawing.Common": "7.0.0"
         },
@@ -60,7 +60,7 @@
     }
   },
   "libraries": {
-    "PKHeX.Drawing.PokeSprite/23.05.11": {
+    "PKHeX.Drawing.PokeSprite/23.07.09": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
@@ -86,12 +86,12 @@
       "path": "system.resources.extensions/7.0.0",
       "hashPath": "system.resources.extensions.7.0.0.nupkg.sha512"
     },
-    "PKHeX.Core/23.5.11": {
+    "PKHeX.Core/23.7.9": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
-    "PKHeX.Drawing/23.5.11": {
+    "PKHeX.Drawing/23.7.9": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

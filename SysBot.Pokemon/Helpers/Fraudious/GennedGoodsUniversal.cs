@@ -177,19 +177,6 @@ namespace SysBot.Fraudious
 
             cln.EncryptionConstant = ECKeeper(cln);  // add protection for moushold and dundunsparce
             cln.RefreshChecksum();
-            string msg = "**Pokémon:** ";
-            if (cln.IsShiny)
-                if (cln.ShinyXor == 0)
-                    msg += "■ shiny ";
-                else msg += "★ shiny ";
-            else msg += "";
-            msg += $"{(Species)cln.Species}\n";
-            msg += $"**OT_Name:** {cln.OT_Name}   **OT_Gender:** {(Gender)cln.OT_Gender}\n";
-            msg += $"**TID:** {cln.TrainerTID7:D6}   **SID:** {cln.TrainerSID7:D4}\n";
-            msg += $"**Lang:** {(LanguageID)(cln.Language)}   **Game:** {(GameVersion)(cln.Version)}\n";
-            msg += $"**PID:** {cln.PID:X}   **EC:** {cln.EncryptionConstant:X}";
-
-            await EmbedPokemonMessage(cln, canGMax, FormArgument, msg, $"{partner.TrainerName}, hope you enjoy this Pokémon:").ConfigureAwait(false);
 
             return (result, cln);
         }

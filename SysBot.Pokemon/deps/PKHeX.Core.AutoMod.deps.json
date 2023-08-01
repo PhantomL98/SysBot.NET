@@ -1,42 +1,41 @@
 {
   "runtimeTarget": {
-    "name": ".NETCoreApp,Version=v7.0/win-x64",
+    "name": ".NETCoreApp,Version=v7.0",
     "signature": ""
   },
   "compilationOptions": {},
   "targets": {
-    ".NETCoreApp,Version=v7.0": {},
-    ".NETCoreApp,Version=v7.0/win-x64": {
-      "PKHeX.Core.AutoMod/23.6.3": {
+    ".NETCoreApp,Version=v7.0": {
+      "PKHeX.Core.AutoMod/23.7.9": {
         "dependencies": {
-          "PKHeX.Core": "23.6.3"
+          "PKHeX.Core": "23.7.10"
         },
         "runtime": {
           "PKHeX.Core.AutoMod.dll": {}
         }
       },
-      "PKHeX.Core/23.6.3": {
+      "PKHeX.Core/23.7.10": {
         "runtime": {
           "lib/net7.0/PKHeX.Core.dll": {
-            "assemblyVersion": "23.6.3.0",
-            "fileVersion": "23.6.3.0"
+            "assemblyVersion": "23.7.9.0",
+            "fileVersion": "23.7.9.0"
           }
         }
       }
     }
   },
   "libraries": {
-    "PKHeX.Core.AutoMod/23.6.3": {
+    "PKHeX.Core.AutoMod/23.7.9": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
-    "PKHeX.Core/23.6.3": {
+    "PKHeX.Core/23.7.10": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-5S/Jm2pX4MWmT3seIRaEiODfsyoi/XQaE6kRBANAEzvPqzR5HUaZ6914I0akfh2qXknCI2kQglu5OCWwiAOzmg==",
-      "path": "pkhex.core/23.6.3",
-      "hashPath": "pkhex.core.23.6.3.nupkg.sha512"
+      "sha512": "sha512-F3vz+xZWL/46DBEgHwkwP58fgdXz6fRKly8jB1MRLSz2nfO1e6hb16XRHcjmYnZk9rNL8JHsu43W37fa08ucAA==",
+      "path": "pkhex.core/23.7.10",
+      "hashPath": "pkhex.core.23.7.10.nupkg.sha512"
     }
   }
 }

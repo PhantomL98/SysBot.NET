@@ -13,6 +13,7 @@ using PKHeX.Core.AutoMod;
 using SysBot.Base;
 using static SysBot.Base.SwitchButton;
 using static SysBot.Pokemon.PokeDataOffsetsSWSH;
+using Discord;
 
 namespace SysBot.Pokemon
 {
@@ -123,7 +124,7 @@ namespace SysBot.Pokemon
                 }
 
                 toSend = trade.Receive;
-                bool clearName = false;
+                bool clearName = true;
 
                 if ((Species)toSend.Species != Hub.Config.Distribution.LedySpecies2)
                 {
@@ -146,10 +147,26 @@ namespace SysBot.Pokemon
                 }
                 else
                 {
-                    Log(la.Info.ToString());
                     Log($"Pokemon not valid, do nothing to trade Pokemon");
                     poke.TradeData = trade.Receive;
                 }
+
+                bool canGMax = Fraudiouscl.GetCanGigantamax(poke.TradeData);
+                uint FormArgument = Fraudiouscl.GetFormArgument(poke.TradeData);
+
+                var msgdone = "**Pokémon:** ";
+                if (poke.TradeData.IsShiny)
+                    if (poke.TradeData.ShinyXor == 0)
+                        msgdone += "■ shiny ";
+                    else msgdone += "★ shiny ";
+                else msgdone += "";
+                msgdone += $"{(Species)poke.TradeData.Species}\n";
+                msgdone += $"**OT_Name:** {poke.TradeData.OT_Name}   **OT_Gender:** {(Gender)poke.TradeData.OT_Gender}\n";
+                msgdone += $"**TID:** {poke.TradeData.TrainerTID7:D6}   **SID:** {poke.TradeData.TrainerSID7:D4}\n";
+                msgdone += $"**Lang:** {(LanguageID)(poke.TradeData.Language)}   **Game:** {(GameVersion)(poke.TradeData.Version)}\n";
+                msgdone += $"**PID:** {poke.TradeData.PID:X}   **EC:** {poke.TradeData.EncryptionConstant:X}";
+
+                await fraudious.EmbedPokemonMessage(poke.TradeData, canGMax, FormArgument, msgdone, $"{partner.TrainerName}, hope you enjoy this Pokémon:").ConfigureAwait(false);
 
                 poke.SendNotification(this, "Injecting the requested Pokémon.");
                 await Click(A, 0_800, token).ConfigureAwait(false);

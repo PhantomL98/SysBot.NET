@@ -81,12 +81,26 @@ namespace SysBot.Pokemon.Discord
                         FormArgument = mon9.FormArgument;
                         break;
                 }
-                if (routine == PokeRoutineType.Clone || routine == PokeRoutineType.Dump)
+                if (routine == PokeRoutineType.Clone || routine == PokeRoutineType.Dump || routine == PokeRoutineType.DirectTrade)
                 {
-                    
-                    embedTitle = $"__Prepare the trade code once the bot messages you__\n";
+                    var me = SysCord<T>.Runner;
+                    var cd = SysCordSettings.HubConfig.TradeAbuse.TradeCooldown;
+                    string botversion = "";
+                    if (me is not null)
+                        botversion = me.ToString()!.Substring(46, 3);
+                    var gamever = botversion switch
+                    {
+                        "PK9" => "SV",
+                        "PK8" => "SWSH",
+                        "PA8" => "PLA",
+                        "PB8" => "BDSP",
+                        _ => "LGPE",
+                    };
+
+                    embedTitle = $"__Search once bot DMs you Initializing trade__\n";
                     embedAuthor = $"{trainer}'s ";
                     embedMsg = $"";
+
                     if (routine == PokeRoutineType.Clone)
                     {
                         embedMsgColor = 0xF9F815;
@@ -108,6 +122,16 @@ namespace SysBot.Pokemon.Discord
                         embedMsg += $"You can show up to **{SysCordSettings.HubConfig.Trade.MaxDumpsPerTrade}** Pokémon\n\n";
                         embedMsg += $"Your cooldown of **{SysCordSettings.HubConfig.TradeAbuse.TradeCooldown}** mins will start once the trade completes\n\n";
                         embedMsg += $"Thank you come again!";
+                    }
+                    else if (routine == PokeRoutineType.DirectTrade)
+                    {
+                        embedMsgColor = 0x6FFEEC;
+                        embedAuthor += "Direct Trade Request";
+                        embedMsg += $"Trade using the nicknames on sheet or use **Special Features**\n";
+                        embedMsg += $"The Current Game running is **{gamever}**\n\n";
+                        embedMsg += $"Commands:\n**!help**, **!rsv**, **!t**, **!dump**, **!clone**, **!checkcd**\n";
+                        embedMsg += $"Your cooldown of **{cd}** mins will start once the trade completes\n";
+                        embedMsg += $"Enjoy & Please come again !";
                     }
 
                     embedAuthorBuild.IconUrl = "https://archives.bulbagarden.net/media/upload/e/e1/PCP363.png";
