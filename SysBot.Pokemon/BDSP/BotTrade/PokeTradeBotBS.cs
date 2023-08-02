@@ -319,7 +319,7 @@ namespace SysBot.Pokemon
                     await Click(A, 0_500, token).ConfigureAwait(false);
             }
 
-            poke.SendNotification(this, $"Found Link Trade partner: {tradePartner.TrainerName}. Waiting for a Pokémon...");
+            poke.SendNotification(this, $"Found Link Trade partner: {tradePartner.TrainerName}. Here are your details:\r\nNID: {trainerNID}\r\nTID: {tradePartner.TID7:D6}\r\nSID: {tradePartner.SID7:D4}\r\nWaiting for a Pokémon...");
 
             // Requires at least one trade for this pointer to make sense, so cache it here.
             LinkTradePokemonOffset = await SwitchConnection.PointerAll(Offsets.LinkTradePartnerPokemonPointer, token).ConfigureAwait(false);

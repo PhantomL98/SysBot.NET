@@ -317,6 +317,7 @@ namespace SysBot.Pokemon
 
             var trainerName = await GetTradePartnerName(TradeMethod.LinkTrade, token).ConfigureAwait(false);
             var trainerTID = await GetTradePartnerTID7(TradeMethod.LinkTrade, token).ConfigureAwait(false);
+            var trainerSID = await GetTradePartnerSID7(TradeMethod.LinkTrade, token).ConfigureAwait(false);
             var trainerNID = await GetTradePartnerNID(token).ConfigureAwait(false);
             RecordUtil<PokeTradeBotSWSH>.Record($"Initiating\t{trainerNID:X16}\t{trainerName}\t{poke.Trainer.TrainerName}\t{poke.Trainer.ID}\t{poke.ID}\t{toSend.EncryptionConstant:X8}");
             Log($"Found Link Trade partner: {trainerName}-{trainerTID} (ID: {trainerNID})");
@@ -341,7 +342,7 @@ namespace SysBot.Pokemon
                     await Click(A, 0_500, token).ConfigureAwait(false);
             }
 
-            poke.SendNotification(this, $"Found Link Trade partner: {trainerName}. Waiting for a Pokémon...");
+            poke.SendNotification(this, $"Found Link Trade partner: {trainerName}. Here are your details:\r\nNID: {trainerNID}\r\nTID: {trainerTID:D6}\r\nSID: {trainerSID:D4}\r\nWaiting for a Pokémon...");
 
             if (poke.Type == PokeTradeType.Dump)
                 return await ProcessDumpTradeAsync(poke, token).ConfigureAwait(false);
@@ -1085,6 +1086,16 @@ namespace SysBot.Pokemon
         {
             var data = await Connection.ReadBytesAsync(LinkTradePartnerNIDOffset, 8, token).ConfigureAwait(false);
             return BitConverter.ToUInt64(data, 0);
+        }
+
+        private async Task<string> GetTradePartnerSID7(TradeMethod tradeMethod, CancellationToken token)
+        {
+            var ofs = GetTrainerTIDSIDOffset(tradeMethod);
+            var data = await Connection.ReadBytesAsync(ofs, 8, token).ConfigureAwait(false);
+
+            var tidsid = BitConverter.ToUInt32(data, 0);
+            var sid7 = $"{tidsid / 1_000_000:D4}";
+            return sid7;
         }
         private static short CheckOfferedSpecies(PK8 offered)
         {

@@ -292,7 +292,7 @@ namespace SysBot.Pokemon
                 return partnerCheck;
             }
 
-            poke.SendNotification(this, $"Found Link Trade partner: {tradePartner.TrainerName}. Waiting for a Pokémon...");
+            poke.SendNotification(this, $"Found Link Trade partner: {tradePartner.TrainerName}. Here are your details:\r\nNID: {trainerNID}\r\nTID: {tradePartner.TID7:D6}\r\nSID: {tradePartner.SID7:D4}\r\nWaiting for a Pokémon...");
 
             if (poke.Type == PokeTradeType.Dump)
             {

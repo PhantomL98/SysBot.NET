@@ -36,7 +36,17 @@ namespace SysBot.Pokemon.Discord
 
                 // Notify in channel
                 // await context.Channel.SendMessageAsync(msg).ConfigureAwait(false); 
+                
+                var user = trader;
+                SocketGuildUser guser = (SocketGuildUser)user;
+                var UNick = guser.Nickname;
 
+                if (UNick is null) UNick = user.Username;
+                
+                var userID = user.Id;
+                var hub = SysCord<T>.Runner.Hub;
+                var Info = hub.Queues.Info;
+                var position = Info.CheckPosition(userID, routine);
                 string embedMsg, embedTitle = "", embedAuthor, embedThumbUrl = "";
                 bool CanGMax = false;
                 uint FormArgument = 0;
@@ -98,7 +108,7 @@ namespace SysBot.Pokemon.Discord
                     };
 
                     embedTitle = $"__Search once bot DMs you Initializing trade__\n";
-                    embedAuthor = $"{trainer}'s ";
+                    embedAuthor = $"{UNick}'s ";
                     embedMsg = $"";
 
                     if (routine == PokeRoutineType.Clone)
@@ -136,8 +146,16 @@ namespace SysBot.Pokemon.Discord
 
                     embedAuthorBuild.IconUrl = "https://archives.bulbagarden.net/media/upload/e/e1/PCP363.png";
                     embedAuthorBuild.Name = embedAuthor;
-                    
-                    embedFtr.Text = $"Current Position: " + SysCord<T>.Runner.Hub.Queues.Info.Count.ToString() + ".\nEstimated Wait: " + Math.Round(((SysCord<T>.Runner.Hub.Queues.Info.Count) * 1.65), 1).ToString() + " minutes.";
+
+                    embedFtr.Text = $"Current Position: " + SysCord<T>.Runner.Hub.Queues.Info.Count.ToString();
+
+                    var botct = Info.Hub.Bots.Count;
+                    if (position.Position > botct)
+                    {
+                        var eta = Info.Hub.Config.Queues.EstimateDelay(position.Position, botct);
+                        embedFtr.Text += $"\nEstimated wait: {eta:F1} minutes.";
+                    }
+
                     embedFtr.IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/approvalspheal.png";
                     
                     embedThumbUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/approvalspheal.png";
@@ -161,7 +179,7 @@ namespace SysBot.Pokemon.Discord
                     if (trade.HeldItem > 0)
                         embedTitle += $" ➜ {HeldItem}";
 
-                    embedAuthor = $"{trainer}'s ";
+                    embedAuthor = $"{UNick}'s ";
                     embedAuthor += trade.IsShiny ? "**shiny** " : "";
                     embedAuthor += "Pokémon:";
 
@@ -190,7 +208,14 @@ namespace SysBot.Pokemon.Discord
                     
                     embedMsgColor = new Color((uint)Enum.Parse(typeof(embedColor), Enum.GetName(typeof(Ball), trade.Ball)));
 
-                    embedFtr.Text = $"Current Position: " + SysCord<T>.Runner.Hub.Queues.Info.Count.ToString() + ".\nEstimated Wait: " + Math.Round(((SysCord<T>.Runner.Hub.Queues.Info.Count) * 1.65), 1).ToString() + " minutes.";
+                    embedFtr.Text = $"Current Position: " + SysCord<T>.Runner.Hub.Queues.Info.Count.ToString();
+
+                    var botct = Info.Hub.Bots.Count;
+                    if (position.Position > botct)
+                    {
+                        var eta = Info.Hub.Config.Queues.EstimateDelay(position.Position, botct);
+                        embedFtr.Text += $"\nEstimated wait: {eta:F1} minutes.";
+                    }
                     embedFtr.IconUrl = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/approvalspheal.png";
 
                     string URLStart = "https://raw.githubusercontent.com/PhantomL98/HomeImages/main/Sprites/200x200/poke_capture";
