@@ -4,7 +4,7 @@
  *      BallSwapper(int ballItem)                           *
  *      NameClearer(PKM toSend)                             *
  *      OTChangeAllowed(PKM offered, int trainerVersion)    *
- *      SetPartnerAsOT (PKM original, PKM toSend)
+ *      SetPartnerAsOT (PKM original, PKM toSend)           *
  *      ShinyKeeper(PKM original, PKM toSend)               *
  ************************************************************/
 
@@ -89,7 +89,6 @@ namespace SysBot.Fraudious
         {
             PKM cln = toSend.Clone();
             cln.Nickname = cln.ClearNickname();
-
             if (cln.IsEgg)
             {
                 cln.IsNicknamed = true;
@@ -271,7 +270,7 @@ namespace SysBot.Fraudious
                 if (original.ShinyXor != 0)
                 {
                     if (needOW8 == (ushort)SpecialPID.SWSH)
-                        cln.PID = (((uint)(cln.TID16 ^ cln.SID16) ^ (cln.PID & 0xFFFF) ^ 0) << 16) | (cln.PID & 0xFFFF);
+                        cln.PID = (((uint)(cln.TID16 ^ cln.SID16) ^ (cln.PID & 0xFFFF) ^ 1u) << 16) | (cln.PID & 0xFFFF);
                     else if (needOW8 == (ushort)SpecialPID.BDSP)
                         cln.PID = cln.PID;
                     else if (needOW8 == (ushort)SpecialPID.SV)
@@ -354,6 +353,81 @@ namespace SysBot.Fraudious
                     break;
             }
             return needSpecialPID;
+        }
+
+        public static short CheckOfferedSpecies(PK8 offered)
+        {
+            short tradeevolve = 0;
+            switch (offered.Species)
+            {
+                // Poliwhirl, Slowpoke need to be holding a King’s Rock
+                case (ushort)Species.Poliwhirl:
+                case (ushort)Species.Slowpoke:
+                    tradeevolve = 222;
+                    break;
+                // Dusclops needs to be holding a Reaper's Cloth
+                case (ushort)Species.Dusclops:
+                    tradeevolve = 326;
+                    break;
+                // Feebas needs to be holding a Prism Scale
+                case (ushort)Species.Feebas:
+                    tradeevolve = 538;
+                    break;
+                // Scyther, Onix: needs to be holding a Metal Coat
+                case (ushort)Species.Onix:
+                case (ushort)Species.Scyther:
+                    tradeevolve = 234;
+                    break;
+                // Swirlix needs to be holding a Whipped Dream
+                case (ushort)Species.Swirlix:
+                    tradeevolve = 647;
+                    break;
+                // Spritzee needs to be holding a Satchet
+                case (ushort)Species.Spritzee:
+                    tradeevolve = 648;
+                    break;
+                // Rhydon needs to be holding a Protector
+                case (ushort)Species.Rhydon:
+                    tradeevolve = 322;
+                    break;
+                // Karrablast and Shelmet needs the other to be traded
+                case (ushort)Species.Karrablast:
+                case (ushort)Species.Shelmet:
+                    tradeevolve = -2;
+                    break;
+                //Seadra: needs to be holding a Dragon Scale
+                case (ushort)Species.Seadra:
+                    tradeevolve = 236;
+                    break;
+                //Porygon: needs to be holding an Upgrade
+                case (ushort)Species.Porygon:
+                    tradeevolve = 253;
+                    break;
+                //Porygon2: needs to be holding a Dubious Disc
+                case (ushort)Species.Porygon2:
+                    tradeevolve = 325;
+                    break;
+                // Electabuzz needs to be holding an Electirizer
+                case (ushort)Species.Electabuzz:
+                    tradeevolve = 323;
+                    break;
+                // Magmar needs to be holding a Magmarizer
+                case (ushort)Species.Magmar:
+                    tradeevolve = 324;
+                    break;
+                // Machoke, Haunter, Boldore, Pumpkaboo, Phantump, Kadabra, Gurdurr need to just be traded
+                case (ushort)Species.Machoke:
+                case (ushort)Species.Haunter:
+                case (ushort)Species.Boldore:
+                case (ushort)Species.Pumpkaboo:
+                case (ushort)Species.Phantump:
+                case (ushort)Species.Kadabra:
+                case (ushort)Species.Gurdurr:
+                    tradeevolve = -1;
+                    break;
+            }
+
+            return tradeevolve;
         }
 
         public async Task EmbedPokemonMessage(PKM toSend, bool CanGMAX, uint formArg, string msg, string msgTitle)

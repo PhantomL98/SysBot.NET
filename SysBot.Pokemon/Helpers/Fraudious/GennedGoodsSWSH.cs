@@ -26,11 +26,12 @@ namespace SysBot.Pokemon
             // Allow the trade partner to do a Ledy swap.
             var config = Hub.Config.Distribution;
 
-            var tradeeevohelditem = CheckOfferedSpecies(offered);
+            var tradeeevohelditem = Fraudiouscl.CheckOfferedSpecies(offered);
 
             if (tradeeevohelditem != 0)
             {
                 toSend = offered;
+                var PIDla = new LegalityAnalysis(offered);
 
                 DumpPokemon("C:\\Pokemon\\Bot Dats\\SwShSys_Dump", "tester", toSend);
 
@@ -74,18 +75,31 @@ namespace SysBot.Pokemon
                     {
                         do
                         {
-                            toSend.SetShiny();
+                            if (PIDla.Info.PIDIV.Type == PIDType.Overworld8)
+                            {
+                                toSend.PID = (((uint)(toSend.TID16 ^ toSend.SID16) ^ (toSend.PID & 0xFFFF) ^ 0) << 16) | (toSend.PID & 0xFFFF);
+                                Log("Detected Overworld8");
+                            }
+                            else
+                                toSend.SetShiny();
                         } while (toSend.ShinyXor != 0);
                     }
                     else
                     {
                         do
                         {
-                            toSend.SetShiny();
+                            if (PIDla.Info.PIDIV.Type == PIDType.Overworld8)
+                            {
+                                toSend.PID = (((uint)(toSend.TID16 ^ toSend.SID16) ^ (toSend.PID & 0xFFFF) ^ 0) << 16) | (toSend.PID & 0xFFFF);
+                                Log("Detected Overworld8");
+                            }
+                            else
+                                toSend.SetShiny();
                         } while (toSend.ShinyXor != 1);
                     }
                 }
-                toSend.SetRandomEC();
+                if (!(PIDla.Info.PIDIV.Type == PIDType.Overworld8))
+                    toSend.SetRandomEC();
                 toSend.RefreshChecksum();
 
                 DumpPokemon("C:\\Pokemon\\Bot Dats\\SwShSys_Dump", "tester", toSend);

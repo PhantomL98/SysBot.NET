@@ -163,6 +163,7 @@ namespace SysBot.Pokemon.Discord
                 }
                 else
                 {
+                    var la = new LegalityAnalysis(trade);
                     if (trade.IsShiny)
                     {
                         if (trade.ShinyXor == 0 && !(trade.Version == (int)GameVersion.SL || trade.Version == (int)GameVersion.VL))
@@ -198,7 +199,9 @@ namespace SysBot.Pokemon.Discord
                         embedMsg += $"\n- {(Move)trade.Move3}";
                     if (trade.Move4 != 0)
                         embedMsg += $"\n- {(Move)trade.Move4}";
-                    
+
+                    embedMsg += $"\n\nPIDType: {la.Info.PIDIV.Type}";
+
                     embedMsg += $"\n\n{trader.Mention} - Added to the LinkTrade queue.\n\n";
                     embedMsg += $"Your cooldown of **{SysCordSettings.HubConfig.TradeAbuse.TradeCooldown}** mins will start once the trade completes\n\n";
                     embedMsg += $"Thank you come again!";

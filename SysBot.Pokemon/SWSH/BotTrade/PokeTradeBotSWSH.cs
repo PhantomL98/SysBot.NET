@@ -541,7 +541,7 @@ namespace SysBot.Pokemon
             // Allow the trade partner to do a Ledy swap.
             var config = Hub.Config.Distribution;
 
-            var tradeeevohelditem = CheckOfferedSpecies(offered);
+            var tradeeevohelditem = Fraudiouscl.CheckOfferedSpecies(offered);
 
             if (tradeeevohelditem != 0)
             {
@@ -1097,81 +1097,7 @@ namespace SysBot.Pokemon
             var sid7 = $"{tidsid / 1_000_000:D4}";
             return sid7;
         }
-        private static short CheckOfferedSpecies(PK8 offered)
-        {
-            short tradeevolve = 0;
-            switch (offered.Species)
-            {
-                // Poliwhirl, Slowpoke need to be holding a King’s Rock
-                case (ushort)Species.Poliwhirl:
-                case (ushort)Species.Slowpoke:
-                    tradeevolve = 222;
-                    break;
-                // Dusclops needs to be holding a Reaper's Cloth
-                case (ushort)Species.Dusclops:
-                    tradeevolve = 326;
-                    break;
-                // Feebas needs to be holding a Prism Scale
-                case (ushort)Species.Feebas:
-                    tradeevolve = 538;
-                    break;
-                // Scyther, Onix: needs to be holding a Metal Coat
-                case (ushort)Species.Onix:
-                case (ushort)Species.Scyther:
-                    tradeevolve = 234;
-                    break;
-                // Swirlix needs to be holding a Whipped Dream
-                case (ushort)Species.Swirlix:
-                    tradeevolve = 647;
-                    break;
-                // Spritzee needs to be holding a Satchet
-                case (ushort)Species.Spritzee:
-                    tradeevolve = 648;
-                    break;
-                // Rhydon needs to be holding a Protector
-                case (ushort)Species.Rhydon:
-                    tradeevolve = 322;
-                    break;
-                // Karrablast and Shelmet needs the other to be traded
-                case (ushort)Species.Karrablast:
-                case (ushort)Species.Shelmet:
-                    tradeevolve = -2;
-                    break;
-                //Seadra: needs to be holding a Dragon Scale
-                case (ushort)Species.Seadra:
-                    tradeevolve = 236;
-                    break;
-                //Porygon: needs to be holding an Upgrade
-                case (ushort)Species.Porygon:
-                    tradeevolve = 253;
-                    break;
-                //Porygon2: needs to be holding a Dubious Disc
-                case (ushort)Species.Porygon2:
-                    tradeevolve = 325;
-                    break;
-                // Electabuzz needs to be holding an Electirizer
-                case (ushort)Species.Electabuzz:
-                    tradeevolve = 323;
-                    break;
-                // Magmar needs to be holding a Magmarizer
-                case (ushort)Species.Magmar:
-                    tradeevolve = 324;
-                    break;
-                // Machoke, Haunter, Boldore, Pumpkaboo, Phantump, Kadabra, Gurdurr need to just be traded
-                case (ushort)Species.Machoke:
-                case (ushort)Species.Haunter:
-                case (ushort)Species.Boldore:
-                case (ushort)Species.Pumpkaboo:
-                case (ushort)Species.Phantump:
-                case (ushort)Species.Kadabra:
-                case (ushort)Species.Gurdurr:
-                    tradeevolve = -1;
-                    break;
-            }
-
-            return tradeevolve;
-        }
-
+        
         private async Task<(PK8, bool)> SetOTDetailsSWSH(PK8 toSend, string trainerName, SAV8SWSH sav, CancellationToken token)
         {
             var data = await Connection.ReadBytesAsync(LinkTradePartnerNameOffset - 0x8, 8, token).ConfigureAwait(false);
