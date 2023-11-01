@@ -26,7 +26,13 @@ namespace SysBot.Pokemon
             // Allow the trade partner to do a Ledy swap.
             var config = Hub.Config.Distribution;
 
-            var tradeeevohelditem = Fraudiouscl.CheckOfferedSpecies(offered);
+            short tradeeevohelditem = 0;
+
+            if (offered.HeldItem == 229)
+            {
+                offered.HeldItem = 0;
+                tradeeevohelditem = Fraudiouscl.CheckOfferedSpecies(offered);
+            }
 
             if (tradeeevohelditem != 0)
             {
@@ -98,8 +104,9 @@ namespace SysBot.Pokemon
                         } while (toSend.ShinyXor != 1);
                     }
                 }
-                if (!(PIDla.Info.PIDIV.Type == PIDType.Overworld8))
+                if (!(PIDla.Info.PIDIV.Type == PIDType.Overworld8) && !(toSend.Met_Location==122))
                     toSend.SetRandomEC();
+                
                 toSend.RefreshChecksum();
 
                 DumpPokemon("C:\\Pokemon\\Bot Dats\\SwShSys_Dump", "tester", toSend);
