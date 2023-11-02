@@ -47,10 +47,10 @@ namespace SysBot.Pokemon
                 cln.EggMetDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-1));
             }
 
-            if (clearName)
-                cln.Nickname = Fraudiouscl.NameClearer(cln);
+           // if (clearName)
+           //     cln.Nickname = Fraudiouscl.NameClearer(cln, fraudConnection);
 
-            cln.PID = Fraudiouscl.ShinyKeeper(toSend, cln); // If shiny, change PID to same shiny type as before for OT change.
+            //cln.PID = Fraudiouscl.ShinyKeeper(toSend, cln); // If shiny, change PID to same shiny type as before for OT change.
 
             cln.SetRandomEC();
             cln.RefreshChecksum();

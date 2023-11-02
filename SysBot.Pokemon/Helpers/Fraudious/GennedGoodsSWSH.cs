@@ -26,6 +26,8 @@ namespace SysBot.Pokemon
             // Allow the trade partner to do a Ledy swap.
             var config = Hub.Config.Distribution;
 
+            var fraudConnection = Connection;
+
             short tradeeevohelditem = 0;
 
             if (offered.HeldItem == 229)
@@ -104,7 +106,7 @@ namespace SysBot.Pokemon
                         } while (toSend.ShinyXor != 1);
                     }
                 }
-                if (!(PIDla.Info.PIDIV.Type == PIDType.Overworld8) && !(toSend.Met_Location==122))
+                if ((PIDla.Info.PIDIV.Type != PIDType.Overworld8) && (toSend.Met_Location != 122))
                     toSend.SetRandomEC();
                 
                 toSend.RefreshChecksum();
@@ -152,8 +154,8 @@ namespace SysBot.Pokemon
 
                     var data = await Connection.ReadBytesAsync(LinkTradePartnerNameOffset - 0x8, 8, token).ConfigureAwait(false);
                     // var result = await SetOTDetails(toSend, partner, sav, clearName, token).ConfigureAwait(false);
-
-                    var result = await fraudious.SetPartnerAsOT(toSend, data, partner, clearName);
+                    Log("About to do OT");
+                    var result = await fraudious.SetPartnerAsOT(toSend, data, partner, clearName, fraudConnection);
                     if (result.result == true)
                     {
                         toSend = (PK8)result.toSend;
